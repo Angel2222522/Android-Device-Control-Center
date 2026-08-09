@@ -58,7 +58,9 @@ object DeviceSnapshotReader {
 }
 
 object SnapshotPresentation {
-    fun gib(bytes: Long): String = String.format(Locale.ROOT, "%.2f GB", bytes / 1_073_741_824.0)
+    fun gib(bytes: Long): String = String.format(Locale.ROOT, "%.2f GiB", bytes / 1_073_741_824.0)
+
+    fun decimalGb(bytes: Long): String = String.format(Locale.ROOT, "%.2f GB", bytes / 1_000_000_000.0)
 
     fun thermalLabel(status: Int): String = when (status) {
         PowerManager.THERMAL_STATUS_NONE -> "Χωρίς θερμικό περιορισμό"
@@ -80,7 +82,7 @@ object SnapshotPresentation {
     fun accessLabel(granted: Boolean): String = if (granted) "Ενεργή" else "Δεν έχει δοθεί"
 
     fun memoryDetail(advertisedBytes: Long, kernelBytes: Long, thresholdBytes: Long): String =
-        "Εγκατεστημένη φυσική RAM ${gib(advertisedBytes)} · " +
+        "Εγκατεστημένη φυσική RAM ${decimalGb(advertisedBytes)} (${gib(advertisedBytes)}) · " +
             "Προσβάσιμη στον πυρήνα ${gib(kernelBytes)} · " +
             "Όριο χαμηλής μνήμης ${gib(thresholdBytes)}"
 }
