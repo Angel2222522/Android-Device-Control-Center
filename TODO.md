@@ -11,12 +11,12 @@
 
 ## Phase 1
 
-- [ ] User creates/supplies an existing GitHub repository.
+- [x] User creates/supplies an existing GitHub repository.
 - [x] Create local pinned Android/Gradle project configuration.
 - [x] Add minimal native project and CI workflow.
 - [x] Add lint, unit-test and APK artifact jobs.
-- [ ] Publish foundation to repository.
-- [ ] Run CI and inspect every result.
-- [ ] Fix and rerun until green.
+- [x] Publish foundation to repository.
+- [x] Run CI and inspect every result.
+- [x] Fix and rerun until green.
 - [ ] Define physical Android 16 checkpoint procedure.
 - [ ] Establish release signing strategy without committing secrets.
