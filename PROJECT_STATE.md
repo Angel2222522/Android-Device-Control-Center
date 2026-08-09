@@ -25,12 +25,15 @@
 
 - RAM: 3.53 GB total, 1.13 GB available, 0.42 GB low-memory threshold; Android did not report low memory.
 - Thermal: UI rendered “Σοβαρή θερμική επιβάρυνση” and thermal headroom 1.02.
-- Storage: 101.76 GB total, 28.54 GB available.
+- Storage: app-visible data filesystem 101.76 GiB total; 28.54 GiB available in first capture.
+- OEM comparison: 4 GB physical RAM + 4 GB storage-backed RAM expansion; 128 GB advertised storage.
+- Official semantics verified: `advertisedMem` is retail/advertised physical memory, while `totalMem` is kernel-accessible RAM.
+- PR #5 adds both RAM values and truthful app-data-filesystem storage labels; CI run `31314062520` passed and merge commit is `addd31b6b2ded85b56968f8456578a882014e003`.
 - Usage Access and All Files Access: not granted, as expected; the app did not request them automatically.
 
 ## Current gate
 
-Clean installation, stable-signed in-place updating, telemetry rendering, corrected thermal wording and thermal API semantics are all physically verified. Comparison with Android system information remains open.
+Clean installation, stable-signed in-place updating, telemetry rendering, corrected thermal wording and thermal API semantics are all physically verified. Comparison with OEM settings is complete; physical rendering of the new advertised/kernel-accessible RAM split remains open.
 
 ## Verification language
 
