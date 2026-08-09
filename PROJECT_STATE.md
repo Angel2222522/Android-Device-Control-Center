@@ -34,7 +34,7 @@
 - The artifact was installed over the existing stable-signed app without uninstalling, launched successfully and was inspected on the target OPPO Android 16 phone.
 - The diagnosis card rendered the expected current result: no active memory-pressure finding, one informational battery-voltage data-quality finding, explicit evidence and no automatic action.
 - Physical screenshot evidence showed `lowMemory=false`, current thermal status without restriction, and the target's voltage remaining unavailable/rejected as untrusted. The displayed RAM, battery and storage values were treated as dynamic snapshot values.
-- Diagnosis engine v1 is now PHYSICALLY VERIFIED on the target; PR #8 remains ready to be merged.
+- Diagnosis engine v1 is now PHYSICALLY VERIFIED on the target. PR #8 was merged as `d55decfa4d09ee2d662588695eaaa029a50e5583`, and `main` now contains the milestone.
 
 ## Physical Phase 2 observations
 
@@ -56,7 +56,7 @@ The corrected checkpoint is commit `fff926687aeec0b4c2e7058c3efe80060a6e0eb`, CI
 
 The merge commit is `76eb50e29dee6cb72310c47416961d9b601d9bad`; current `main` was checked directly after merge. The successful validation run remains `31316180145`.
 
-The diagnosis-engine v1 implementation has passed CI and physical inspection on the target phone. The remaining gate is administrative/repository completion: mark PR #8 ready, merge it, then re-check `main` and record the merge commit.
+The diagnosis-engine v1 implementation has passed CI and physical inspection on the target phone. PR #8 was merged as `d55decfa4d09ee2d662588695eaaa029a50e5583`; direct `main` inspection confirmed that this is the current HEAD.
 
 ## Verification language
 
@@ -65,6 +65,6 @@ The diagnosis-engine v1 implementation has passed CI and physical inspection on 
 - Foundation build pipeline and physical launch are VERIFIED.
 - Phase 2 telemetry collection/rendering is PHYSICALLY VERIFIED; corrected thermal presentation is PHYSICALLY VERIFIED.
 - Battery snapshot implementation and truthful unavailable-voltage handling are PHYSICALLY VERIFIED. A usable voltage measurement is NOT AVAILABLE on this target; the rejected vendor value is not presented as a measurement.
-- The diagnosis-engine v1 implementation, CI and target-device behavior are PHYSICALLY VERIFIED on the checkpoint branch. The milestone is not yet present on `main` until PR #8 is merged.
+- The diagnosis-engine v1 implementation, CI and target-device behavior are PHYSICALLY VERIFIED and are now present on `main` after PR #8 merge.
 - No optimization action exists, and the diagnosis engine executes no action automatically.
 - Stable debug signing, clean installation and subsequent in-place update are PHYSICALLY VERIFIED.

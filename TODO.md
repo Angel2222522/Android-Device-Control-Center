@@ -48,7 +48,7 @@
 - [x] Pass GitHub Actions lint, unit tests, Android 16 build, signing verification and artifact upload.
 - [x] Install the milestone APK over the current stable-signed app and inspect the diagnosis card.
 - [x] Physically verify the diagnosis output on the target phone, including the expected unavailable voltage limitation.
-- [ ] Merge the verified diagnosis-engine v1 checkpoint.
+- [x] Merge the verified diagnosis-engine v1 checkpoint.
 
 ## Phase 2 — Battery factual snapshot
 

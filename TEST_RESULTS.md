@@ -156,4 +156,11 @@
 - Target snapshot observed: 58% battery, discharging, 35.1 °C, raw current 1,038 μA, charge counter 2,749 mAh; these are point-in-time values.
 - RAM/thermal/storage context observed: 1.04 GiB available RAM, `lowMemory=false`, 93% thermal-envelope use with no current thermal restriction, 28.26 GiB app-data storage available.
 - Battery voltage remained explicitly unavailable/rejected as untrusted, consistent with the prior physical limitation. No voltage, health or capacity claim was introduced.
-- Diagnosis engine v1 target-device result: **PHYSICALLY VERIFIED**. PR #8 is ready for merge; `main` has not yet changed.
+- Diagnosis engine v1 target-device result: **PHYSICALLY VERIFIED**.
+
+## 2026-08-09 — Diagnosis engine v1 merge
+
+- PR #8 was marked ready and merged successfully.
+- Merge commit: `d55decfa4d09ee2d662588695eaaa029a50e5583`.
+- Direct repository inspection confirmed that `main` points to the merge commit.
+- The diagnosis-engine v1 milestone is now **CI-VERIFIED, PHYSICALLY VERIFIED AND MERGED**.
