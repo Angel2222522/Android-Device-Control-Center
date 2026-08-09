@@ -33,7 +33,7 @@
 
 ## Current gate
 
-Clean installation, stable-signed in-place updating, telemetry rendering, corrected thermal wording and thermal API semantics are all physically verified. Comparison with OEM settings is complete; physical rendering of the new advertised/kernel-accessible RAM split remains open.
+Clean installation, stable-signed in-place updating, telemetry rendering, corrected thermal wording and thermal API semantics are all physically verified. Comparison with OEM settings is complete. Physical rendering exposed a GB/GiB labelling defect: binary GiB values were labelled GB. PR #6 corrected the unit system, passed CI run `31314345629`, and merged as `4b9ed5d14b7f5d08f081e924bf8ec20700912c3c`. Corrected physical rendering remains open.
 
 ## Verification language
 
