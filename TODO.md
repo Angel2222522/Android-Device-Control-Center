@@ -29,6 +29,7 @@
 - [x] Add unit tests and pass CI.
 - [x] Physically install and render the snapshot on the target phone.
 - [ ] Compare RAM and storage values with Android system information.
-- [ ] Validate thermal status/headroom interpretation before using it diagnostically.
-- [ ] Correct any misleading thermal wording or threshold mapping.
-- [ ] Build the next stable-signed checkpoint and verify in-place updating.
+- [x] Validate thermal status/headroom interpretation against official Android documentation.
+- [x] Correct misleading thermal wording and add regression tests.
+- [x] Build and CI-verify the next stable-signed checkpoint.
+- [ ] Install it over the current version without uninstalling and inspect corrected thermal wording.
