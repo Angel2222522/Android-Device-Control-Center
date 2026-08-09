@@ -76,6 +76,13 @@
 - **Decision:** Use decimal GB for marketed/advertised capacity and binary GiB for values divided by 2^30. When useful, show both.
 - **Why:** The target device exposed that 4,000,000,000 bytes is 4.00 GB but 3.73 GiB. Labelling a GiB calculation as GB is a factual error.
 
+## D-015 — Factual battery snapshot boundaries
+
+- **Decision:** Battery telemetry starts with the standard sticky battery broadcast and optional `BatteryManager` properties. Missing or unsupported properties remain unavailable; they are never replaced with zero or a fabricated estimate.
+- **Units:** Temperature is displayed in °C after converting the broadcast's tenths-of-a-degree-Celsius value; voltage in mV; current in μA/mA with the Android sign convention; charge counter in μAh/mAh; energy counter in nWh/Wh.
+- **Rejected:** Battery-health percentage, full-capacity claim, universal charging-time claim or optimisation action before a qualified multi-session evidence model exists.
+- **Why:** The public APIs expose current state and optional fuel-gauge readings, not an authoritative universal health value. Vendor support and sensor semantics vary.
+
 ## Open product decisions
 
 - SAF/MediaStore-first versus broad All Files Access posture.

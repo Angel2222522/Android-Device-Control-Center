@@ -89,3 +89,15 @@
 - Thermal capture: 106% thermal-envelope use and severe thermal restriction; values are dynamic.
 - Screenshot evidence: user-provided and archived in the project evidence folder.
 - GB/GiB presentation milestone: **PHYSICALLY VERIFIED**.
+
+## 2026-08-09 — Battery factual snapshot implementation
+
+- Official Android `BatteryManager` reference and Android 16/AOSP battery-service semantics: **VERIFIED**.
+- Confirmed units: battery temperature broadcast is in tenths of a degree Celsius; voltage is in millivolts; current properties are in microamperes with positive meaning net current entering the battery and negative meaning net discharge; charge counter is in microampere-hours; energy counter is in nanowatt-hours.
+- PR #7 head `ebdb8b289c27f472516865c5f839668e02bd65f7` initially failed CI run `31315368065` at unit-test compilation because one nullable `Double` was passed to a non-null assertion overload. No production compilation error occurred.
+- Corrective commit `9ffe70d5a240c7d4e8e5e64c39bbafb4f3e829eb` fixed the test assertion.
+- CI run `31315477707`: lint, unit tests, Android 16 build, stable certificate verification and artifact upload **PASSED**.
+- Battery tests cover level conversion, status/source labels, unit conversions and unsupported-property handling.
+- Artifact ID: `9038613946`; artifact digest: `sha256:7a4a12b561bf07ce81453dd663709a5c563efdedc47c8dac8f2a05fb00852bc8`.
+- Extracted APK SHA-256: `9f8ee46e05793606f33fe1959a7b7e94c4ae8ea246603f02a73954706ee97480`.
+- Physical installation and inspection on the target OPPO Android 16 phone: **PENDING**. No physical battery value is claimed yet.

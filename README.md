@@ -4,7 +4,7 @@ Android 16-first, local-first device intelligence and guided-control application
 
 The project is in **Phase 2: capability and permission center**.
 
-Phase 1 foundation is verified in CI and on the target Android 16 phone. Phase 2 code for real RAM, thermal, storage and access-state snapshots has passed CI and awaits physical device verification.
+Phase 1 foundation and the RAM/thermal/storage/access snapshot are verified in CI and on the target Android 16 phone. The factual battery snapshot has passed CI and awaits physical inspection on the target phone.
 
 ## Product contract
 

@@ -2,7 +2,7 @@
 
 **Updated:** 2026-08-09  
 **Phase:** 2 — capability and permission center  
-**Production code:** real device snapshot collector; diagnosis engine not started
+**Production code:** real device and battery snapshot collectors; diagnosis engine not started
 
 ## Completed
 
@@ -20,6 +20,7 @@
 - Screenshot evidence confirms rendering of real RAM, thermal, storage and access-state values.
 - Official PowerManager semantics verified: headroom 1.0 is the severe-throttling threshold; 1.02 is at/above that threshold.
 - Thermal wording corrected in PR #4 and CI-verified in run `31313577829`; merged as `0be0590673d079eb761fc56a288d915059282b91`.
+- Factual battery snapshot implemented in PR #7. It uses the standard Android battery broadcast plus optional `BatteryManager` properties, with explicit unavailable states and no health/optimisation claims. CI run `31315477707` passed; physical target verification is pending.
 
 ## Physical Phase 2 observations
 
@@ -35,11 +36,14 @@
 
 Clean installation, stable-signed in-place updating, telemetry rendering, corrected thermal wording and thermal API semantics are all physically verified. Comparison with OEM settings is complete. Physical rendering exposed a GB/GiB labelling defect: binary GiB values were labelled GB. PR #6 corrected the unit system, passed CI run `31314345629`, and merged as `4b9ed5d14b7f5d08f081e924bf8ec20700912c3c`. Corrected physical rendering is now VERIFIED by user screenshots: 4.00 GB (3.73 GiB), 3.53 GiB kernel-accessible, 1.08 GiB available; storage 28.37 GiB available / 101.76 GiB app-data filesystem. The thermal signal remains dynamic and showed 106% in this capture.
 
+The battery snapshot is CI-verified but not yet physically verified on the OPPO target. The checkpoint APK was produced from PR #7 head `9ffe70d5a240c7d4e8e5e64c39bbafb4f3e829eb` for the next physical inspection.
+
 ## Verification language
 
 - Matrix `VERIFIED` = feasibility supported by current documentation/reference evidence.
 - Implementation `VERIFIED` requires build + tests + inspected result.
 - Foundation build pipeline and physical launch are VERIFIED.
 - Phase 2 telemetry collection/rendering is PHYSICALLY VERIFIED; corrected thermal presentation is PHYSICALLY VERIFIED.
+- Battery snapshot implementation is CI-VERIFIED; physical battery rendering remains UNVERIFIED.
 - No diagnosis or optimization action exists yet.
 - Stable debug signing, clean installation and subsequent in-place update are PHYSICALLY VERIFIED.
