@@ -22,6 +22,7 @@ data class DeviceSnapshot(
     val availableStorageBytes: Long,
     val hasUsageAccess: Boolean,
     val hasAllFilesAccess: Boolean,
+    val battery: BatterySnapshot,
 )
 
 object DeviceSnapshotReader {
@@ -44,6 +45,7 @@ object DeviceSnapshotReader {
             availableStorageBytes = storage.availableBytes,
             hasUsageAccess = hasUsageAccess(context),
             hasAllFilesAccess = Environment.isExternalStorageManager(),
+            battery = BatterySnapshotReader.read(context),
         )
     }
 
