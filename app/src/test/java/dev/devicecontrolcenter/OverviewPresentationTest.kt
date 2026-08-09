@@ -1,5 +1,6 @@
 package dev.devicecontrolcenter
 
+import android.os.PowerManager
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -32,6 +33,23 @@ class OverviewPresentationTest {
 
         assertEquals(OverviewTone.UNAVAILABLE, status.tone)
         assertEquals("Ένα σήμα δεν είναι διαθέσιμο", status.headline)
+    }
+
+    @Test
+    fun informationalConditionDoesNotClaimThereIsNoActiveSignal() {
+        val status = OverviewPresentation.status(
+            reportWith(DiagnosisSeverity.INFO, DiagnosisFindingType.CONDITION),
+        )
+
+        assertEquals(OverviewTone.INFO, status.tone)
+        assertEquals("Υπάρχει ενημερωτική ένδειξη", status.headline)
+    }
+
+    @Test
+    fun compactMetricCopyKeepsThermalStateAndHeadroomReadable() {
+        assertEquals("Ελαφρύς", OverviewPresentation.thermalShortLabel(PowerManager.THERMAL_STATUS_LIGHT))
+        assertEquals("Θερμικό όριο: 97%", OverviewPresentation.thermalSupport(0.97f))
+        assertEquals("Δεν υπάρχει μέτρηση τώρα", OverviewPresentation.thermalSupport(null))
     }
 
     @Test

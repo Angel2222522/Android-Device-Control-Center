@@ -42,7 +42,7 @@ object OverviewPresentation {
             DiagnosisSeverity.INFO -> OverviewStatus(
                 tone = if (conditionCount > 0) OverviewTone.INFO else OverviewTone.UNAVAILABLE,
                 label = if (conditionCount > 0) "Ενημερωτική ένδειξη" else "Ποιότητα δεδομένων",
-                headline = if (conditionCount > 0) "Χωρίς ενεργή πίεση" else "Ένα σήμα δεν είναι διαθέσιμο",
+                headline = if (conditionCount > 0) "Υπάρχει ενημερωτική ένδειξη" else "Ένα σήμα δεν είναι διαθέσιμο",
                 detail = findingSummary(conditionCount, dataQualityCount),
             )
 
@@ -57,14 +57,18 @@ object OverviewPresentation {
 
     fun thermalShortLabel(status: Int): String = when (status) {
         PowerManager.THERMAL_STATUS_NONE -> "Χωρίς περιορισμό"
-        PowerManager.THERMAL_STATUS_LIGHT -> "Ελαφρύς περιορισμός"
-        PowerManager.THERMAL_STATUS_MODERATE -> "Μέτριος περιορισμός"
-        PowerManager.THERMAL_STATUS_SEVERE -> "Σοβαρός περιορισμός"
-        PowerManager.THERMAL_STATUS_CRITICAL -> "Κρίσιμος περιορισμός"
+        PowerManager.THERMAL_STATUS_LIGHT -> "Ελαφρύς"
+        PowerManager.THERMAL_STATUS_MODERATE -> "Μέτριος"
+        PowerManager.THERMAL_STATUS_SEVERE -> "Σοβαρός"
+        PowerManager.THERMAL_STATUS_CRITICAL -> "Κρίσιμος"
         PowerManager.THERMAL_STATUS_EMERGENCY -> "Έκτακτη ανάγκη"
-        PowerManager.THERMAL_STATUS_SHUTDOWN -> "Επικείμενος τερματισμός"
-        else -> "Άγνωστη κατάσταση"
+        PowerManager.THERMAL_STATUS_SHUTDOWN -> "Τερματισμός"
+        else -> "Άγνωστη"
     }
+
+    fun thermalSupport(headroom: Float?): String = headroom?.let {
+        String.format(Locale.ROOT, "Θερμικό όριο: %.0f%%", it * 100)
+    } ?: "Δεν υπάρχει μέτρηση τώρα"
 
     fun thermalTone(status: Int): OverviewTone = when (status) {
         PowerManager.THERMAL_STATUS_NONE -> OverviewTone.NEUTRAL
@@ -92,7 +96,7 @@ object OverviewPresentation {
             snapshot.logicalProcessorCount?.let { append(" · $it λογικοί επεξεργαστές") }
         }
 
-        CpuActivitySource.UNAVAILABLE_OR_RESTRICTED -> "Η read-only πηγή δεν είναι διαθέσιμη τώρα"
+        CpuActivitySource.UNAVAILABLE_OR_RESTRICTED -> "Δεν υπάρχει αξιόπιστο σήμα τώρα"
     }
 
     fun batterySupport(snapshot: BatterySnapshot): String = listOf(

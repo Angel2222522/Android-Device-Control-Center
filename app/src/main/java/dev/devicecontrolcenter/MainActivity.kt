@@ -304,8 +304,7 @@ private fun CapabilityScreen(
                         modifier = Modifier.weight(1f),
                         title = "Θερμική κατάσταση",
                         value = OverviewPresentation.thermalShortLabel(snapshot.thermalStatus),
-                        supporting = snapshot.thermalHeadroom?.let(SnapshotPresentation::thermalEnvelopeLabel)
-                            ?: "Δεν υπάρχει μέτρηση θερμικού ορίου τώρα",
+                        supporting = OverviewPresentation.thermalSupport(snapshot.thermalHeadroom),
                         tone = OverviewPresentation.thermalTone(snapshot.thermalStatus),
                     )
                     MetricTile(
@@ -452,10 +451,8 @@ private fun SnapshotControls(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = SnapshotPresentation.capturedAtLabel(state.capturedAtMillis),
+                    text = SnapshotPresentation.capturedTimeLabel(state.capturedAtMillis),
                     style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
                 )
                 state.errorMessage?.let { message ->
                     Text(
@@ -530,15 +527,11 @@ private fun MetricTile(
                 text = value,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
             )
             Text(
                 text = supporting,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
             )
         }
     }
@@ -822,7 +815,13 @@ private fun AccessRow(label: String, granted: Boolean) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = label, style = MaterialTheme.typography.bodyMedium)
+        Text(
+            text = label,
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = 12.dp),
+            style = MaterialTheme.typography.bodyMedium,
+        )
         StatusBadge(
             text = SnapshotPresentation.accessLabel(granted),
             tone = if (granted) OverviewTone.NEUTRAL else OverviewTone.UNAVAILABLE,
