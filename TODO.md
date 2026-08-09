@@ -37,4 +37,4 @@
 - [x] Relabel storage value as the app-data filesystem rather than marketed total storage.
 - [x] Physically inspect the new RAM/storage truth labels.
 - [x] Identify and correct decimal GB versus binary GiB labelling defect.
-- [ ] Physically verify corrected GB/GiB rendering.
+- [x] Physically verify corrected GB/GiB rendering.
