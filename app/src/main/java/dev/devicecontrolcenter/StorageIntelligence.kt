@@ -509,8 +509,7 @@ object StorageScanner {
                     accumulator.recordUnreadableDirectory(pending.uri.toString())
 
                 DocumentChildEnumerationResult.COMPLETED,
-                DocumentChildEnumerationResult.STOPPED,
-                -> Unit
+                DocumentChildEnumerationResult.STOPPED -> Unit
             }
 
             if (accumulator.wasTruncated) break
