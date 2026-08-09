@@ -1,1 +1,1 @@
-sed: can't read : No such file or directory
+# Intentionally empty until production dependencies require explicit rules.
