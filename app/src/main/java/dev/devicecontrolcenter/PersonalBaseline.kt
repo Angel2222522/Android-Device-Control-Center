@@ -118,7 +118,7 @@ object PersonalBaseline {
 object PersonalBaselinePresentation {
     fun statusLabel(state: PersonalBaselineState): String = when (state) {
         PersonalBaselineState.INSUFFICIENT_DATA -> "Ανεπαρκές ιστορικό"
-        PersonalBaselineState.READY -> "Read-only σύγκριση"
+        PersonalBaselineState.READY -> "Μόνο ανάγνωση"
     }
 
     fun summary(result: PersonalBaselineResult): String = when (result.state) {
@@ -143,7 +143,7 @@ object PersonalBaselinePresentation {
 
     fun lowMemoryEvidence(result: PersonalBaselineResult): String =
         "Τώρα: ${flagLabel(result.currentIsLowMemory)} · " +
-            "${result.previousLowMemoryCount}/${result.referenceSampleCount} προηγούμενα με Android low-memory flag"
+            "${result.previousLowMemoryCount}/${result.referenceSampleCount} προηγούμενα με ένδειξη χαμηλής μνήμης Android"
 
     fun thermalEvidence(result: PersonalBaselineResult): String {
         val previous = result.highestPreviousThermalStatus
@@ -154,7 +154,7 @@ object PersonalBaselinePresentation {
     }
 
     fun limitation(): String =
-        "Σύγκριση ενδείξεων της ίδιας συσκευής· δεν είναι score ή διάγνωση, δεν αποδεικνύει αιτία ή υγεία και δεν εκτελεί ενέργεια."
+        "Σύγκριση ενδείξεων της ίδιας συσκευής· δεν είναι βαθμολογία ή διάγνωση, δεν αποδεικνύει αιτία ή υγεία και δεν εκτελεί ενέργεια."
 
     private fun numericEvidence(
         metric: PersonalBaselineNumericMetric,
