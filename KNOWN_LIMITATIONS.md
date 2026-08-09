@@ -14,6 +14,10 @@
 - The thermal rule reports the current Android status and may include headroom as evidence, but it cannot establish which app, component or workload caused the restriction. Thermal values are dynamic.
 - The battery rule reports a voltage data-quality gap when needed; it does not estimate battery health, true capacity, drain direction or remaining runtime.
 - Diagnosis engine v1 is a current-snapshot slice only. Its CI and target-device behavior are verified, but historical baselines, confidence, alternative-cause analysis and cross-domain correlation remain unimplemented.
+- CPU activity probe v1 is not an Android public system-wide CPU API. It depends on read-only `/proc/stat` access and may be unavailable or vary with the OEM/kernel.
+- A returned CPU activity percentage is a short-window aggregate counter derivation for the whole device; it is not CPU speed, frequency, temperature, app attribution or proof of a performance problem. No CPU diagnosis rule uses it yet.
+- The logical-processor count is runtime-reported context, not a complete CPU topology or performance-core description.
+- CPU activity probe v1 is CI-VERIFIED and physically verified for its explicit unavailable state on the target. The OPPO Android 16/OEM kernel did not expose a usable read-only `/proc/stat` sample, so numeric device-level CPU activity is unavailable on this device.
 - Thermal/headroom APIs depend on hardware support; fine-grained sensor files may be inaccessible. The headroom value is a normalized thermal-envelope signal, not a temperature, and values above 1.0 do not map uniquely to severity levels beyond the severe threshold.
 - Shizuku non-root mode is ADB-shell level, restarts after boot and varies by Android/OEM permissions.
 - Local VPN firewall occupies Android's single VPN slot and can add battery/latency overhead.

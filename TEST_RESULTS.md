@@ -164,3 +164,28 @@
 - Merge commit: `d55decfa4d09ee2d662588695eaaa029a50e5583`.
 - Direct repository inspection confirmed that `main` points to the merge commit.
 - The diagnosis-engine v1 milestone is now **CI-VERIFIED, PHYSICALLY VERIFIED AND MERGED**.
+
+## 2026-08-09 — CPU activity probe v1 implementation checkpoint
+
+- Android public-API boundary checked before implementation: current-thread CPU time is not a device-wide load measurement; system-wide profiling/tracing is not treated as an ordinary runtime API.
+- Implemented a read-only `/proc/stat` aggregate-counter probe with two samples over a 250 ms window, collected off the UI thread.
+- Added explicit unavailable behavior for inaccessible/malformed procfs and tests for parsing, counter deltas, invalid input and unavailable state.
+- The result is intentionally presented as short-window whole-device activity, not speed, frequency, temperature, app attribution or a diagnosis.
+
+## 2026-08-09 — CPU activity probe v1 CI and artifact integrity
+
+- GitHub Actions run `31318259964`: lint, unit tests, Android 16 build, stable-certificate verification and artifact upload **PASSED**.
+- Artifact `9039406371`; artifact ZIP digest: `sha256:6acdf78a05671925c625ffccda8a70234780f06363c7c1d866288100288c453`.
+- Complete APK payload: 27,096,030 bytes; SHA-256: `bfa9492e31f0f37945f20def40c23e240609c768abbf6c862569b06686bb2512`.
+- The first local extraction delivered for phone inspection was truncated to 16,711,680 bytes and was unusable. The source artifact ZIP itself passed `unzip -t`; a fresh complete extraction passed APK ZIP integrity testing.
+- Static APK inspection found the expected `MainActivity`, `CapabilityRoute`, `CpuSnapshotReader`, diagnosis and CPU presentation classes. The truncated file must not be installed or used as evidence.
+- CPU activity probe v1 code, CI and artifact integrity: **VERIFIED**. Target-phone installation, launch and CPU-card inspection: **NOT VERIFIED / PENDING**.
+
+## 2026-08-09 — CPU activity probe v1 physical verification
+
+- The complete APK from artifact `9039406371` was installed over the existing stable-signed application on the OPPO A60 5G, Android/ColorOS 16.0.5: **PASSED**.
+- Application launch and existing telemetry/diagnosis cards rendered successfully: **PASSED**.
+- CPU card rendered `Μη διαθέσιμη δραστηριότητα CPU` with the explanation that read-only `/proc/stat` was unavailable or did not return a valid sample: **PASSED**.
+- This is the truthful target capability result, not a crash and not permission denial caused by the app. No CPU percentage was fabricated.
+- Physical snapshot evidence included 53% battery, 37.1 °C, 973 μA raw current, 2,507 mAh charge counter, 1.13 GiB available RAM, light thermal restriction (status code 1) and 94% thermal-envelope use. These values are dynamic.
+- Physical verification of CPU activity probe v1: **PASSED for truthful unavailable-state behavior**. Numeric device-level CPU activity on this target: **NOT AVAILABLE**.

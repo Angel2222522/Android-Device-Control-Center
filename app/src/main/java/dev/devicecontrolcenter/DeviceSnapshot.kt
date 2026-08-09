@@ -23,6 +23,7 @@ data class DeviceSnapshot(
     val hasUsageAccess: Boolean,
     val hasAllFilesAccess: Boolean,
     val battery: BatterySnapshot,
+    val cpu: CpuSnapshot = CpuSnapshot.unavailable(),
 )
 
 object DeviceSnapshotReader {
@@ -46,6 +47,7 @@ object DeviceSnapshotReader {
             hasUsageAccess = hasUsageAccess(context),
             hasAllFilesAccess = Environment.isExternalStorageManager(),
             battery = BatterySnapshotReader.read(context),
+            cpu = CpuSnapshotReader.read(),
         )
     }
 
