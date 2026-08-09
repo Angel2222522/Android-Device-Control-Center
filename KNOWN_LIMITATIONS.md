@@ -6,7 +6,7 @@
 - Usage/network statistics can be delayed, bucketed and OEM-dependent.
 - Cross-app CPU/RAM and precise battery attribution have no universally reliable public API.
 - Battery current/capacity sensor support and semantics vary by manufacturer.
-- Thermal/headroom APIs depend on hardware support; fine-grained sensor files may be inaccessible.
+- Thermal/headroom APIs depend on hardware support; fine-grained sensor files may be inaccessible. The headroom value is a normalized thermal-envelope signal, not a temperature, and values above 1.0 do not map uniquely to severity levels beyond the severe threshold.
 - Shizuku non-root mode is ADB-shell level, restarts after boot and varies by Android/OEM permissions.
 - Local VPN firewall occupies Android's single VPN slot and can add battery/latency overhead.
 - Domain attribution is incomplete under encrypted DNS, QUIC, CDNs and shared endpoints.
