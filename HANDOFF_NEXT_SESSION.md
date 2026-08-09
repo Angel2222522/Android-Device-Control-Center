@@ -7,10 +7,11 @@
 5. Stable signing passed two independent CI builds and explicit certificate verification; PR #3 merged as `e1d78cea001f0da8769ccf2db70eb6296407ec20`.
 6. User removed the old build once, clean-installed the stable-signed Phase 2 APK and supplied screenshots confirming successful launch and real telemetry rendering.
 7. Physical observations: RAM 3.53 GB total / 1.13 GB available / 0.42 GB low threshold / low flag false; storage 101.76 GB total / 28.54 GB available; thermal headroom 1.02 with “serious” label; special accesses not granted.
-8. Do not treat thermal interpretation as correct until official semantics and device behavior are checked.
-9. Compare values with Android system information.
-10. Produce a subsequent stable-signed checkpoint and verify it installs over the current app without uninstalling.
+8. Official semantics are verified: headroom 1.0 is the severe-throttling threshold; 1.02 is at/above it.
+9. PR #4 corrected the counterintuitive wording, passed CI run `31313577829`, and merged as `0be0590673d079eb761fc56a288d915059282b91`.
+10. Download the PR #4 artifact and verify it installs over the current stable-signed app without uninstalling; inspect the corrected thermal wording.
+11. Compare RAM/storage values with Android system information.
 
 **Current production code:** real RAM/thermal/storage/access snapshot; no diagnosis engine.  
 **Verified:** CI, stable certificate, clean install, launch and telemetry rendering.  
-**First unfinished point:** validate displayed telemetry semantics, especially thermal status/headroom.
+**First unfinished point:** physically verify the in-place update and corrected thermal presentation.
