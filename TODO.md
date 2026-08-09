@@ -102,5 +102,7 @@
 - [x] Preserve truthful measurements, provenance, limitations and unavailable states.
 - [x] Add only presentation/state tests required by the redesign; do not add new capability scope.
 - [x] Pass lint, unit tests, Android 16 build, signing verification and GitHub Actions.
-- [ ] Install and visually inspect the design milestone on the OPPO A60 5G.
-- [ ] Accept the first design milestone only after physical visual inspection and user review.
+- [x] Install and visually inspect the first design candidate on the OPPO A60 5G; record the presentation defects found.
+- [ ] Re-install and visually inspect the corrective design candidate on the OPPO A60 5G.
+
+- [ ] Accept the design milestone only after the corrective physical inspection and user review pass.
