@@ -20,7 +20,7 @@
 - Screenshot evidence confirms rendering of real RAM, thermal, storage and access-state values.
 - Official PowerManager semantics verified: headroom 1.0 is the severe-throttling threshold; 1.02 is at/above that threshold.
 - Thermal wording corrected in PR #4 and CI-verified in run `31313577829`; merged as `0be0590673d079eb761fc56a288d915059282b91`.
-- Factual battery snapshot implemented in PR #7. It uses the standard Android battery broadcast plus optional `BatteryManager` properties, with explicit unavailable states and no health/optimisation claims. CI run `31315477707` passed; the first physical inspection exposed an invalid OEM voltage value and the milestone remains unverified.
+- Factual battery snapshot implemented in PR #7. It uses the standard Android battery broadcast plus optional `BatteryManager` properties, with explicit unavailable states and no health/optimisation claims. The first physical inspection exposed an invalid OEM voltage value; the validation/fallback correction passed CI run `31316180145` and the milestone remains unverified pending re-test.
 
 ## Physical Phase 2 observations
 
@@ -36,7 +36,9 @@
 
 Clean installation, stable-signed in-place updating, telemetry rendering, corrected thermal wording and thermal API semantics are all physically verified. Comparison with OEM settings is complete. Physical rendering exposed a GB/GiB labelling defect: binary GiB values were labelled GB. PR #6 corrected the unit system, passed CI run `31314345629`, and merged as `4b9ed5d14b7f5d08f081e924bf8ec20700912c3c`. Corrected physical rendering is now VERIFIED by user screenshots: 4.00 GB (3.73 GiB), 3.53 GiB kernel-accessible, 1.08 GiB available; storage 28.37 GiB available / 101.76 GiB app-data filesystem. The thermal signal remains dynamic and showed 106% in this capture.
 
-The first battery checkpoint was installed and inspected on the OPPO target. Level, status/source, temperature and charge-counter rendering appeared as live values, but the Android battery broadcast returned `3 mV (0.003 V)`, which is physically implausible for a live phone. The value is therefore not verified. A correction is in progress: reject implausible broadcast values, try only a standard read-only `power_supply` sysfs fallback, preserve source provenance, and otherwise show unavailable. PR #7 remains open and unmerged.
+The first battery checkpoint was installed and inspected on the OPPO target. Level, status/source, temperature and charge-counter rendering appeared as live values, but the Android battery broadcast returned `3 mV (0.003 V)`, which is physically implausible for a live phone. The value is therefore not verified. The correction now rejects implausible broadcast values, tries only a standard read-only `power_supply` sysfs fallback, preserves source provenance, and otherwise shows unavailable. Corrected APK physical re-test is pending; PR #7 remains open and unmerged.
+
+The corrected checkpoint is commit `fff926687aeec0b4c2e7058c3efe80060a6e0eb`, CI run `31316180145`, artifact `9038822328`, extracted APK SHA-256 `f8e87d4e2681c2bb329df814b32b2c61bd779b08275a210a39f6af043e8231c`.
 
 ## Verification language
 

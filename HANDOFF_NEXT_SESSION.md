@@ -20,7 +20,8 @@
 18. The checkpoint was installed over the current app and inspected on the target. Level, state/source, temperature and charge-counter fields rendered; the Android broadcast returned `3 mV (0.003 V)` for voltage, which is physically implausible. Current was `929 μA` while discharging, so it remains a raw sensor value with no inferred direction.
 19. The battery milestone is therefore **PARTIALLY INSPECTED, NOT VERIFIED**. Do not merge PR #7 yet.
 20. The correction now in the working tree rejects broadcast voltage outside a conservative plausible envelope, tries only the standard read-only `power_supply` sysfs `voltage_now` path in μV, records the voltage source and shows unavailable when neither source is trustworthy.
+21. Corrected commit `fff926687aeec0b4c2e7058c3efe80060a6e0eb` passed CI run `31316180145`; artifact `9038822328`; extracted APK SHA-256 `f8e87d4e2681c2bb329df814b32b2c61bd779b08275a210a39f6af043e8231c`.
 
 **Current production code:** real RAM/thermal/storage/access snapshot plus a factual battery snapshot; no diagnosis engine.
 **Verified:** CI, stable certificate, clean install, launch and previous telemetry rendering; the first battery card inspection is partial and exposed an OEM voltage-quality failure.
-**First unfinished point:** run CI for the voltage-validation correction, install that single corrected checkpoint APK, and physically verify either a plausible voltage with source provenance or an explicit unavailable state. Keep the battery milestone UNVERIFIED until then.
+**First unfinished point:** install the single corrected checkpoint APK, and physically verify either a plausible voltage with source provenance or an explicit unavailable state. Keep the battery milestone UNVERIFIED until then.

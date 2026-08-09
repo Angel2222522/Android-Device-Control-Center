@@ -110,3 +110,13 @@
 - Voltage returned by the Android battery broadcast: `3 mV (0.003 V)`. This is physically implausible for a live phone and is **FAILED / NOT VERIFIED**.
 - Current returned: `929 μA (0.93 mA)` while the status was discharging. It is retained as a raw vendor sensor value; no drain direction or causal conclusion is claimed.
 - Decision: do not merge PR #7. Add plausibility validation, a standard read-only `power_supply` sysfs fallback where accessible, explicit voltage provenance and an unavailable state when no trusted value exists. No heuristic `3 -> 3000 mV` conversion will be added.
+
+## 2026-08-09 — Battery voltage validation correction CI
+
+- Corrective commit: `fff926687aeec0b4c2e7058c3efe80060a6e0eb`.
+- Added plausibility gating for broadcast voltage, standard read-only `power_supply` sysfs μV fallback, source provenance and explicit unavailable/rejected rendering.
+- Added regression tests for the observed `3 mV` case, trusted sysfs fallback and no-fallback behavior.
+- GitHub Actions run `31316180145`: lint, unit tests, Android 16 build, stable certificate verification and artifact upload **PASSED**.
+- Artifact ID `9038822328`; artifact digest `sha256:1c592e07f4d7c1216407c74431e65790aa380b743383dc8801786a3e920a2d02`.
+- Extracted corrected APK SHA-256: `f8e87d4e2681c2bb329df814b32b2c61bd779b08275a210a39f6af043e8231c`.
+- Physical installation and re-test of the corrected APK: **PENDING**. The battery milestone remains **UNVERIFIED**.
