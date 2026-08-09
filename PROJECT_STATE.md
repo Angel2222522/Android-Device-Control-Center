@@ -23,7 +23,7 @@
 
 ## Current gate
 
-Phase 2 code and CI are verified, but the first physical update exposed unstable debug signing. A stable development-only signing identity is being added. One uninstall of the old ephemeral-signed APK will be required; future debug updates must install in place.
+Phase 2 code and CI are verified. Stable development-only signing was CI-verified twice and merged in PR #3 as `e1d78cea001f0da8769ccf2db70eb6296407ec20`. One uninstall of the old ephemeral-signed APK is required; future debug updates must install in place.
 
 ## Verification language
 
@@ -32,4 +32,4 @@ Phase 2 code and CI are verified, but the first physical update exposed unstable
 - Foundation build pipeline and physical launch are VERIFIED.
 - Phase 2 collector is CI-VERIFIED but remains PHYSICALLY UNVERIFIED.
 - No diagnosis or optimization action exists yet.
-- Stable debug-signing fix is IMPLEMENTED LOCALLY but UNVERIFIED until CI and two consecutive install/update checks pass.
+- Stable debug-signing fix is CI-VERIFIED; clean install and subsequent in-place update remain physically unverified.
