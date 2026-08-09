@@ -20,6 +20,8 @@ const val EXACT_DUPLICATE_MAX_HASH_BYTES = 256L * 1_024L * 1_024L
 data class ExactDuplicateGroup(
     val sizeBytes: Long,
     val fileNames: List<String>,
+    val digest: String = "",
+    val fileUris: List<String> = emptyList(),
 )
 
 data class ExactDuplicateResult(
@@ -36,12 +38,25 @@ data class ExactDuplicateUiState(
     val result: ExactDuplicateResult? = null,
     val isScanning: Boolean = false,
     val errorMessage: String? = null,
+    val cleanupMessage: String? = null,
+)
+
+data class ExactCleanupResult(
+    val deletedCount: Int,
+    val skippedCount: Int,
+    val failedCount: Int,
 )
 
 private data class DuplicateCandidate(
     val name: String,
     val sizeBytes: Long,
+    val uri: Uri?,
     val openStream: () -> InputStream?,
+)
+
+private data class DuplicateMatch(
+    val name: String,
+    val uri: Uri?,
 )
 
 private data class CandidateCollection(
@@ -50,7 +65,7 @@ private data class CandidateCollection(
     val wasTruncated: Boolean,
 )
 
-private data class HashOutcome(
+internal data class HashOutcome(
     val digest: String,
     val bytesRead: Long,
     val complete: Boolean,
@@ -91,7 +106,7 @@ object ExactDuplicateScanner {
                 break
             }
 
-            val namesByDigest = linkedMapOf<String, MutableList<String>>()
+            val matchesByDigest = linkedMapOf<String, MutableList<DuplicateMatch>>()
             for (candidate in entries) {
                 check(shouldContinue())
                 val remainingBytes = EXACT_DUPLICATE_MAX_HASH_BYTES - bytesHashed
@@ -120,13 +135,22 @@ object ExactDuplicateScanner {
                 }
 
                 filesHashed++
-                namesByDigest.getOrPut(outcome.digest) { mutableListOf() }.add(candidate.name)
+                matchesByDigest.getOrPut(outcome.digest) { mutableListOf() }.add(
+                    DuplicateMatch(candidate.name, candidate.uri),
+                )
             }
 
-            namesByDigest
+            matchesByDigest
                 .asSequence()
-                .filter { (_, names) -> names.size >= 2 }
-                .map { (_, names) -> ExactDuplicateGroup(sizeBytes, names.take(RESULT_GROUP_LIMIT)) }
+                .filter { (_, matches) -> matches.size >= 2 }
+                .map { (digest, matches) ->
+                    ExactDuplicateGroup(
+                        sizeBytes = sizeBytes,
+                        fileNames = matches.map { it.name }.take(RESULT_GROUP_LIMIT),
+                        digest = digest,
+                        fileUris = matches.mapNotNull { it.uri?.toString() }.take(RESULT_GROUP_LIMIT),
+                    )
+                }
                 .forEach(confirmedGroups::add)
 
             if (wasTruncated) break
@@ -147,6 +171,58 @@ object ExactDuplicateScanner {
 
     internal fun sha256Hex(bytes: ByteArray): String =
         MessageDigest.getInstance("SHA-256").digest(bytes).toHex()
+
+    internal fun hash(
+        openStream: () -> InputStream?,
+        maxBytes: Long,
+        shouldContinue: () -> Boolean,
+    ): HashOutcome {
+        val digest = MessageDigest.getInstance("SHA-256")
+        val buffer = ByteArray(BUFFER_SIZE)
+        val input = openStream() ?: error("Δεν ήταν δυνατή η ανάγνωση του αρχείου.")
+        input.use {
+            var bytesRead = 0L
+            while (true) {
+                check(shouldContinue())
+                val available = maxBytes - bytesRead
+                if (available <= 0L) {
+                    val hasMore = it.read() >= 0
+                    return HashOutcome(
+                        digest = digest.digest().toHex(),
+                        bytesRead = bytesRead,
+                        complete = !hasMore,
+                    )
+                }
+
+                val read = it.read(buffer, 0, min(buffer.size.toLong(), available).toInt())
+                if (read < 0) {
+                    return HashOutcome(
+                        digest = digest.digest().toHex(),
+                        bytesRead = bytesRead,
+                        complete = true,
+                    )
+                }
+                if (read == 0) continue
+                digest.update(buffer, 0, read)
+                bytesRead += read
+            }
+        }
+    }
+
+    internal fun documentSize(context: Context, document: DocumentFile): Long? =
+        runCatching {
+            context.contentResolver.query(
+                document.uri,
+                arrayOf(DocumentsContract.Document.COLUMN_SIZE),
+                null,
+                null,
+                null,
+            )?.use { cursor ->
+                val index = cursor.getColumnIndex(DocumentsContract.Document.COLUMN_SIZE)
+                if (index >= 0 && !cursor.isNull(index)) cursor.getLong(index) else null
+            }
+        }.getOrNull()?.takeIf { it >= 0L }
+            ?: document.length().takeIf { it > 0L }
 
     private fun collectSelectedFolder(
         context: Context,
@@ -187,6 +263,7 @@ object ExactDuplicateScanner {
                                 DuplicateCandidate(
                                     name = child.name?.takeIf(String::isNotBlank) ?: "Χωρίς όνομα",
                                     sizeBytes = size,
+                                    uri = child.uri,
                                     openStream = { context.contentResolver.openInputStream(child.uri) },
                                 ),
                             )
@@ -245,6 +322,7 @@ object ExactDuplicateScanner {
                             DuplicateCandidate(
                                 name = displayPath(roots, child),
                                 sizeBytes = size,
+                                uri = null,
                                 openStream = { FileInputStream(child) },
                             ),
                         )
@@ -257,58 +335,6 @@ object ExactDuplicateScanner {
         return CandidateCollection(groups, entriesSeen, wasTruncated)
     }
 
-    private fun documentSize(context: Context, document: DocumentFile): Long? =
-        runCatching {
-            context.contentResolver.query(
-                document.uri,
-                arrayOf(DocumentsContract.Document.COLUMN_SIZE),
-                null,
-                null,
-                null,
-            )?.use { cursor ->
-                val index = cursor.getColumnIndex(DocumentsContract.Document.COLUMN_SIZE)
-                if (index >= 0 && !cursor.isNull(index)) cursor.getLong(index) else null
-            }
-        }.getOrNull()?.takeIf { it >= 0L }
-            ?: document.length().takeIf { it > 0L }
-
-    private fun hash(
-        openStream: () -> InputStream?,
-        maxBytes: Long,
-        shouldContinue: () -> Boolean,
-    ): HashOutcome {
-        val digest = MessageDigest.getInstance("SHA-256")
-        val buffer = ByteArray(BUFFER_SIZE)
-        val input = openStream() ?: error("Δεν ήταν δυνατή η ανάγνωση του αρχείου.")
-        input.use {
-            var bytesRead = 0L
-            while (true) {
-                check(shouldContinue())
-                val available = maxBytes - bytesRead
-                if (available <= 0L) {
-                    val hasMore = it.read() >= 0
-                    return HashOutcome(
-                        digest = digest.digest().toHex(),
-                        bytesRead = bytesRead,
-                        complete = !hasMore,
-                    )
-                }
-
-                val read = it.read(buffer, 0, min(buffer.size.toLong(), available).toInt())
-                if (read < 0) {
-                    return HashOutcome(
-                        digest = digest.digest().toHex(),
-                        bytesRead = bytesRead,
-                        complete = true,
-                    )
-                }
-                if (read == 0) continue
-                digest.update(buffer, 0, read)
-                bytesRead += read
-            }
-        }
-    }
-
     private fun canonicalPath(file: File): String = runCatching { file.canonicalPath }
         .getOrDefault(file.absolutePath)
 
@@ -316,27 +342,91 @@ object ExactDuplicateScanner {
         val root = roots.firstOrNull { root ->
             val rootPath = canonicalPath(root)
             val filePath = canonicalPath(file)
-            filePath == rootPath || filePath.startsWith("$rootPath${File.separator}")
+            filePath == rootPath || filePath.startsWith(rootPath + File.separator)
         }
         val rootLabel = root?.name?.takeIf(String::isNotBlank) ?: "Κοινόχρηστος χώρος"
         val relative = root?.let { runCatching { file.relativeTo(it).path }.getOrNull() }
-        return if (relative.isNullOrBlank()) rootLabel else "$rootLabel/$relative"
+        return if (relative.isNullOrBlank()) rootLabel else rootLabel + "/" + relative
     }
 
     private fun ByteArray.toHex(): String =
         joinToString(separator = "") { byte -> "%02x".format(Locale.ROOT, byte) }
 }
 
+object ExactDuplicateCleanup {
+    fun deleteSelectedFolderDuplicates(
+        context: Context,
+        selectedTreeUri: Uri,
+        result: ExactDuplicateResult,
+        shouldContinue: () -> Boolean = { true },
+    ): ExactCleanupResult {
+        val hasWriteGrant = context.contentResolver.persistedUriPermissions.any {
+            it.uri == selectedTreeUri && it.isWritePermission
+        }
+        check(hasWriteGrant) {
+            "Δεν υπάρχει αποθηκευμένη εγγραφή για διαγραφή στον επιλεγμένο φάκελο."
+        }
+
+        var deletedCount = 0
+        var skippedCount = 0
+        var failedCount = 0
+
+        result.groups.forEach { group ->
+            group.fileUris.drop(1).forEach { uriString ->
+                check(shouldContinue())
+                val document = DocumentFile.fromSingleUri(context, Uri.parse(uriString))
+                if (document == null || !document.exists()) {
+                    skippedCount++
+                    return@forEach
+                }
+                val currentSize = ExactDuplicateScanner.documentSize(context, document)
+                if (currentSize != group.sizeBytes || group.digest.isBlank()) {
+                    skippedCount++
+                    return@forEach
+                }
+                val verified = runCatching {
+                    ExactDuplicateScanner.hash(
+                        openStream = { context.contentResolver.openInputStream(document.uri) },
+                        maxBytes = group.sizeBytes + 1L,
+                        shouldContinue = shouldContinue,
+                    )
+                }.getOrNull()
+                if (verified == null || !verified.complete || verified.digest != group.digest) {
+                    skippedCount++
+                    return@forEach
+                }
+                when {
+                    runCatching { document.delete() }.getOrDefault(false) -> deletedCount++
+                    else -> failedCount++
+                }
+            }
+        }
+
+        return ExactCleanupResult(
+            deletedCount = deletedCount,
+            skippedCount = skippedCount,
+            failedCount = failedCount,
+        )
+    }
+}
+
 object ExactDuplicatePresentation {
     fun summary(result: ExactDuplicateResult): String =
-        "${result.groups.size} ακριβείς ομάδες · ${result.filesHashed} αρχεία ελέγχθηκαν με SHA-256"
+        result.groups.size.toString() + " ακριβείς ομάδες · " +
+            result.filesHashed + " αρχεία ελέγχθηκαν με SHA-256"
 
     fun groupLabel(group: ExactDuplicateGroup): String =
-        "${group.fileNames.size} ίδια αρχεία · ${StorageIntelligencePresentation.storageSize(group.sizeBytes)} το καθένα"
+        group.fileNames.size.toString() + " ίδια αρχεία · " +
+            StorageIntelligencePresentation.storageSize(group.sizeBytes) + " το καθένα"
 
     fun limitation(result: ExactDuplicateResult): String = buildString {
         append("Ο έλεγχος συνέκρινε περιεχόμενο με SHA-256 και δεν διαγράφηκε ή μετακινήθηκε αρχείο.")
         if (result.wasTruncated) append(" Η σάρωση περιορίστηκε για να παραμείνει ελεγχόμενη.")
-        if (result.failedFileCount > 0) append(" Δεν διαβάστηκαν ${result.failedFileCount} αρχεία.")
+        if (result.failedFileCount > 0) append(" Δεν διαβάστηκαν ")
+        if (result.failedFileCount > 0) append(result.failedFileCount).append(" αρχεία.")
     }
+
+    fun cleanupLabel(result: ExactCleanupResult): String =
+        "Διαγράφηκαν " + result.deletedCount + " αντίγραφα · παραλείφθηκαν " +
+            result.skippedCount + " · αποτυχίες " + result.failedCount
 }
