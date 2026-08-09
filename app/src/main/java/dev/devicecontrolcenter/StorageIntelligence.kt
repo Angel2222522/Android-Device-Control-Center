@@ -115,7 +115,7 @@ object StorageScanner {
                             lastModifiedMillis = modified,
                         )
                         files += entry
-                        if (size >= 0L) {
+                        if (size > 0L) {
                             knownBytes = knownBytes.saturatingAdd(size)
                             filesBySize.getOrPut(size) { mutableListOf() }.add(name)
                         } else {
@@ -156,6 +156,7 @@ object StorageScanner {
             unreadableDirectoryCount = unreadableDirectoryCount,
             wasTruncated = wasTruncated,
             largestFiles = files
+                .filter { it.sizeBytes > 0L }
                 .sortedWith(compareByDescending<StorageFileEntry> { it.sizeBytes }.thenBy { it.name })
                 .take(RESULT_LIMIT),
             oldestFiles = oldest,
@@ -183,7 +184,9 @@ object StorageIntelligencePresentation {
                 ""
             }
 
-    fun fileSize(entry: StorageFileEntry): String = SnapshotPresentation.gib(entry.sizeBytes)
+    fun fileSize(entry: StorageFileEntry): String =
+        entry.sizeBytes.takeIf { it > 0L }?.let(SnapshotPresentation::gib)
+            ?: "Μέγεθος μη διαθέσιμο"
 
     fun modifiedAt(millis: Long, zoneId: ZoneId = ZoneId.systemDefault()): String =
         if (millis <= 0L) "Η ημερομηνία δεν αναφέρθηκε" else {
