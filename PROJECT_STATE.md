@@ -18,6 +18,8 @@
 - Stable development signing passed two independent CI builds plus explicit certificate verification and merged in PR #3 as `e1d78cea001f0da8769ccf2db70eb6296407ec20`.
 - Stable-signed Phase 2 APK clean-installed and launched successfully on the target phone.
 - Screenshot evidence confirms rendering of real RAM, thermal, storage and access-state values.
+- Official PowerManager semantics verified: headroom 1.0 is the severe-throttling threshold; 1.02 is at/above that threshold.
+- Thermal wording corrected in PR #4 and CI-verified in run `31313577829`; merged as `0be0590673d079eb761fc56a288d915059282b91`.
 
 ## Physical Phase 2 observations
 
@@ -28,13 +30,13 @@
 
 ## Current gate
 
-Clean installation and telemetry rendering are physically verified. Exact correctness of the thermal interpretation and comparison of values against Android system information remain open. A subsequent stable-signed APK must also update in place without uninstalling.
+Clean installation, telemetry rendering and thermal API semantics are verified. Comparison with Android system information and physical rendering of the corrected wording remain open. The new stable-signed APK must update in place without uninstalling.
 
 ## Verification language
 
 - Matrix `VERIFIED` = feasibility supported by current documentation/reference evidence.
 - Implementation `VERIFIED` requires build + tests + inspected result.
 - Foundation build pipeline and physical launch are VERIFIED.
-- Phase 2 telemetry collection/rendering is PHYSICALLY VERIFIED, but thermal interpretation is not yet validated.
+- Phase 2 telemetry collection/rendering is PHYSICALLY VERIFIED; corrected thermal presentation is CI-VERIFIED and awaits physical inspection.
 - No diagnosis or optimization action exists yet.
 - Stable debug signing is CI-VERIFIED and clean-install verified; in-place update remains unverified.
