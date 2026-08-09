@@ -19,4 +19,14 @@
 - [x] Run CI and inspect every result.
 - [x] Fix and rerun until green.
 - [ ] Define physical Android 16 checkpoint procedure.
+- [x] Verify debug APK installation and launch on target Android 16 phone.
 - [ ] Establish release signing strategy without committing secrets.
+
+## Phase 2 — Capability and permission center
+
+- [ ] Implement device/RAM/thermal capability snapshot.
+- [ ] Implement Usage Access and All Files Access state detection without requesting them at launch.
+- [ ] Add truthful unavailable/unsupported states.
+- [ ] Add unit tests for presentation mapping.
+- [ ] Build, lint and test in CI.
+- [ ] Install on target phone and compare displayed data with Android system information.

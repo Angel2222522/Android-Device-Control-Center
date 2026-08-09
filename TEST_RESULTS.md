@@ -21,4 +21,6 @@ Future entries must include date, commit SHA, environment/device, exact command 
 - `testDebugUnitTest`: **PASSED**.
 - `assembleDebug`: **PASSED**.
 - Artifact upload: **PASSED** — `android-verification`, artifact ID `9037597185`, 9,476,976 bytes, SHA-256 digest `44709102816321a7a08a7cf307a433b85ffd2108ba5e46af5ae649ca567aaf54`.
-- Physical Android 16 installation/launch: **UNVERIFIED**.
+- Physical Android 16 installation: **PASSED** — confirmed by user-provided screenshot.
+- Physical Android 16 launch/render: **PASSED** — activity remained open and rendered the expected Compose foundation screen.
+- Exact device telemetry: **NOT YET TESTED**.
