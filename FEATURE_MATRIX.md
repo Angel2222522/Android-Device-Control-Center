@@ -58,3 +58,11 @@ Status means documentation-level feasibility as of 2026-08-09. It does **not** m
 - Shared-storage scan: implemented behind an explicit optional `MANAGE_EXTERNAL_STORAGE` flow; this is shared-storage metadata access, not root or private app-directory access.
 - Exact duplicate detection: not implemented in this milestone. Same-size groups are displayed as candidates only; no content hashing or destructive action exists.
 - The table above remains a feasibility matrix. The implementation checkpoint is separate so feasibility status is not mistaken for full product completion.
+
+
+## Implementation checkpoint — unified capability v1 (2026-08-09)
+
+- App intelligence: implemented for visible launcher applications behind explicit Usage Access; CI-verified, physical target inspection pending.
+- Exact duplicate detection: implemented as bounded SHA-256 comparison after explicit user action; CI-verified, physical target inspection pending.
+- History trends: implemented from local successful snapshot history with a minimum five-sample rule; CI-verified, physical target inspection pending.
+- Destructive cleanup, background monitoring, automatic permission requests and unsupported causal/health claims remain out of scope.
