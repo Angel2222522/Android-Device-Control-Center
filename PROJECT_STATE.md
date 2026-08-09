@@ -21,6 +21,7 @@
 - Official PowerManager semantics verified: headroom 1.0 is the severe-throttling threshold; 1.02 is at/above that threshold.
 - Thermal wording corrected in PR #4 and CI-verified in run `31313577829`; merged as `0be0590673d079eb761fc56a288d915059282b91`.
 - Factual battery snapshot implemented in PR #7. It uses the standard Android battery broadcast plus optional `BatteryManager` properties, with explicit unavailable states and no health/optimisation claims. The target's invalid voltage was rejected correctly in the second physical inspection; the truthful battery snapshot milestone is now physically verified, with voltage unavailable on this device.
+- PR #7 was merged as `76eb50e29dee6cb72310c47416961d9b601d9bad`; `main` now contains the physically verified battery milestone.
 
 ## Physical Phase 2 observations
 
@@ -39,6 +40,8 @@ Clean installation, stable-signed in-place updating, telemetry rendering, correc
 The first battery checkpoint was installed and inspected on the OPPO target. Level, status/source, temperature and charge-counter rendering appeared as live values, but the Android battery broadcast returned `3 mV (0.003 V)`, which is physically implausible for a live phone. The corrected checkpoint rejects that value, reports the voltage as unavailable with explicit provenance, and does not fabricate `3000 mV`. The second physical inspection passed this behavior: 62% level, discharging, 35.8 °C, 762 μA raw current and 2,943 mAh charge counter were rendered; values are dynamic and no health/capacity estimate is claimed. The target has no verified voltage source because the standard sysfs fallback was unavailable.
 
 The corrected checkpoint is commit `fff926687aeec0b4c2e7058c3efe80060a6e0eb`, CI run `31316180145`, artifact `9038822328`, extracted APK SHA-256 `f8e87d4e2681c2bb329df814b32b2c61bd779b08275a210a39f6af043e8231c`.
+
+The merge commit is `76eb50e29dee6cb72310c47416961d9b601d9bad`; current `main` was checked directly after merge. The successful validation run remains `31316180145`.
 
 ## Verification language
 

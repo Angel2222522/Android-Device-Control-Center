@@ -22,7 +22,8 @@
 20. The factual battery snapshot and truthful unavailable-voltage handling are now **PHYSICALLY VERIFIED**. A usable voltage reading is not available on this OPPO target; do not infer one.
 21. The correction rejects broadcast voltage outside a conservative plausible envelope, tries only the standard read-only `power_supply` sysfs `voltage_now` path in μV, records the voltage source and shows unavailable when neither source is trustworthy.
 22. Corrected commit `fff926687aeec0b4c2e7058c3efe80060a6e0eb` passed CI run `31316180145`; artifact `9038822328`; extracted APK SHA-256 `f8e87d4e2681c2bb329df814b32b2c61bd779b08275a210a39f6af043e8231c`.
+23. PR #7 was marked ready and merged as `76eb50e29dee6cb72310c47416961d9b601d9bad`. Direct repository inspection confirmed that `main` now points to this merge commit. The successful code-validation run remains `31316180145`.
 
 **Current production code:** real RAM/thermal/storage/access snapshot plus a factual battery snapshot; no diagnosis engine.
 **Verified:** CI, stable certificate, clean install, in-place updates, previous telemetry rendering, factual battery snapshot and truthful rejection of the target's invalid voltage.
-**First unfinished point:** after merging PR #7, begin the first diagnosis-engine slice. Do not treat battery voltage as available on the OPPO target, and do not add health/capacity claims.
+**First unfinished point:** begin the first diagnosis-engine slice. Do not treat battery voltage as available on the OPPO target, and do not add health/capacity claims.

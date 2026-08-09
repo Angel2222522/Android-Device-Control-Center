@@ -129,3 +129,9 @@
 - Trusted voltage measurement on this target: **NOT AVAILABLE**. The read-only sysfs fallback did not provide a usable value. No voltage value is claimed.
 - Battery factual snapshot and truthful unavailable-state handling: **PHYSICALLY VERIFIED**.
 - Battery health, true capacity and drain-direction interpretation remain intentionally unimplemented.
+
+## 2026-08-09 — Battery milestone merge
+
+- PR #7 merged successfully: `76eb50e29dee6cb72310c47416961d9b601d9bad`.
+- Direct repository check after merge: `main` points to `76eb50e29dee6cb72310c47416961d9b601d9bad`.
+- The code-validation CI evidence remains run `31316180145`, which passed lint, tests, Android 16 build, signing verification and artifact upload. No separate workflow run was returned for the merge commit by the repository's pull-request workflow query.
