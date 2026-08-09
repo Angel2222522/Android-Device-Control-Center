@@ -35,4 +35,6 @@
 - [x] Install it over the current version without uninstalling and inspect corrected thermal wording.
 - [x] Add advertised physical RAM alongside kernel-accessible RAM.
 - [x] Relabel storage value as the app-data filesystem rather than marketed total storage.
-- [ ] Physically inspect the new RAM/storage truth labels.
+- [x] Physically inspect the new RAM/storage truth labels.
+- [x] Identify and correct decimal GB versus binary GiB labelling defect.
+- [ ] Physically verify corrected GB/GiB rendering.
