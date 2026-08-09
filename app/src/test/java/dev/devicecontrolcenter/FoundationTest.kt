@@ -7,7 +7,12 @@ import org.junit.Test
 class FoundationTest {
     @Test
     fun formatsBinaryGigabytesWithoutMarketingRounding() {
-        assertEquals("8.00 GB", SnapshotPresentation.gib(8L * 1_073_741_824L))
+        assertEquals("8.00 GiB", SnapshotPresentation.gib(8L * 1_073_741_824L))
+    }
+
+    @Test
+    fun formatsDecimalGigabytesAsAdvertisedCapacity() {
+        assertEquals("4.00 GB", SnapshotPresentation.decimalGb(4_000_000_000L))
     }
 
     @Test
@@ -35,10 +40,10 @@ class FoundationTest {
     @Test
     fun memoryDetailSeparatesAdvertisedFromKernelAccessibleRam() {
         assertEquals(
-            "Εγκατεστημένη φυσική RAM 4.00 GB · Προσβάσιμη στον πυρήνα 3.53 GB · " +
-                "Όριο χαμηλής μνήμης 0.42 GB",
+            "Εγκατεστημένη φυσική RAM 4.00 GB (3.73 GiB) · " +
+                "Προσβάσιμη στον πυρήνα 3.53 GiB · Όριο χαμηλής μνήμης 0.42 GiB",
             SnapshotPresentation.memoryDetail(
-                advertisedBytes = 4L * 1_073_741_824L,
+                advertisedBytes = 4_000_000_000L,
                 kernelBytes = 3_790_259_077L,
                 thresholdBytes = 450_971_566L,
             ),
