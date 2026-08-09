@@ -12,7 +12,8 @@
 10. The PR #4 APK installed over the existing stable-signed app without uninstalling; corrected wording rendered successfully in screenshot evidence.
 11. OEM comparison completed: OPPO shows 4 GB physical + 4 GB storage-backed expansion and 128 GB advertised storage; app APIs returned 3.53 GiB kernel-accessible RAM and 101.76 GiB app-data filesystem.
 12. PR #5 added `advertisedMem`, separated advertised/kernel-accessible RAM, corrected storage labels, passed CI run `31314062520`, and merged as `addd31b6b2ded85b56968f8456578a882014e003`.
+13. Physical rendering exposed a GB/GiB labelling defect. PR #6 corrected it, passed CI run `31314345629`, and merged as `4b9ed5d14b7f5d08f081e924bf8ec20700912c3c`.
 
 **Current production code:** real RAM/thermal/storage/access snapshot; no diagnosis engine.  
 **Verified:** CI, stable certificate, clean install, launch and telemetry rendering.  
-**First unfinished point:** physically verify the PR #5 RAM/storage truth labels.
+**First unfinished point:** physically verify corrected GB/GiB rendering from PR #6.
