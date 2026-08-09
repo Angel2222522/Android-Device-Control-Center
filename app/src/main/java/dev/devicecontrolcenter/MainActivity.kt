@@ -56,7 +56,11 @@ private fun CapabilityScreen(snapshot: DeviceSnapshot) {
             MetricCard(
                 title = "Μνήμη RAM",
                 primary = "${SnapshotPresentation.gib(snapshot.availableMemoryBytes)} διαθέσιμα",
-                detail = "Σύνολο ${SnapshotPresentation.gib(snapshot.totalMemoryBytes)} · Όριο χαμηλής μνήμης ${SnapshotPresentation.gib(snapshot.lowMemoryThresholdBytes)}",
+                detail = SnapshotPresentation.memoryDetail(
+                    advertisedBytes = snapshot.advertisedMemoryBytes,
+                    kernelBytes = snapshot.totalMemoryBytes,
+                    thresholdBytes = snapshot.lowMemoryThresholdBytes,
+                ),
                 status = if (snapshot.isLowMemory) "Υπάρχει πίεση μνήμης" else "Δεν αναφέρεται χαμηλή μνήμη",
             )
             MetricCard(
@@ -67,9 +71,9 @@ private fun CapabilityScreen(snapshot: DeviceSnapshot) {
                 status = "Δεν γίνεται ακόμη απόδοση αιτίας σε εφαρμογή",
             )
             MetricCard(
-                title = "Εσωτερική αποθήκευση",
+                title = "Χώρος δεδομένων εφαρμογών",
                 primary = "${SnapshotPresentation.gib(snapshot.availableStorageBytes)} διαθέσιμα",
-                detail = "Σύνολο ${SnapshotPresentation.gib(snapshot.totalStorageBytes)}",
+                detail = "Προσβάσιμο διαμέρισμα ${SnapshotPresentation.gib(snapshot.totalStorageBytes)} · Δεν είναι η διαφημιζόμενη συνολική χωρητικότητα",
                 status = "Δεν έχει εκτελεστεί ανάλυση αρχείων",
             )
             MetricCard(
