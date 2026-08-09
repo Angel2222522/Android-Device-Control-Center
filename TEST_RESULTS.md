@@ -253,3 +253,13 @@
 - The user reviewed the result and accepted it as a good first version, choosing to defer further design refinement to a later phase so functional development can continue.
 - Premium overview design/UX v1 is now **PHYSICALLY VERIFIED and ACCEPTED AS A BASELINE**, not declared final. Future polish remains recorded design debt.
 - The design PR remains stacked on snapshot lifecycle PR #10. The next unfinished gate is PR #10 physical verification of repeated-tap protection and failure-state preservation; the design milestone must not be described as the final product design.
+
+## 2026-08-09 — Canonical trunk reconciliation and Device Intelligence v1 physical acceptance
+
+- The exact PR12 candidate was reconciled against live branch head `d2d78ce545b06e534000f570d065673fe8494374`.
+- GitHub Actions run `31325270001`: lint, unit tests, Android 16 build, stable certificate verification and artifact upload **PASSED**.
+- Artifact `9041367725` ZIP SHA-256: `70aabe68101f77c72600b79f71f3b55dc22e78b8c34a7df385886e4e1143d3e3`; extracted APK SHA-256: `82fa66e5c3bbc168863e8f48702708b6bb55b3bedccf8289c71866c34629d585`.
+- Artifact ZIP and APK archive integrity checks: **PASSED**. Unit report: 37 tests, 0 failures. Lint: 0 errors, 12 warnings.
+- User-confirmed target-device checks: initial and repeated refresh behavior, preserved snapshot/error behavior, local history, SAF folder selection/read-only scan/rescan, explicit settings flow, optional shared-storage scan, no destructive action and truthful unavailable CPU/voltage states.
+- PR #10 merged as `4b914cf0e41cbf15999a9c380dcad10dcbb6eac3`, PR #11 as `b1710e2ad30a27eac9e4b60590acc11159298921` and PR #12 as `815a8fb136ea0d666b83e169743f3768d85d062a`.
+- The post-merge code line is now canonical on `main`; documentation commits follow this evidence checkpoint.
