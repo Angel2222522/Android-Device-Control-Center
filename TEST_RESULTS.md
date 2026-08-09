@@ -209,3 +209,9 @@
 - GitHub Actions run `31320108150`: lint, unit tests, Android 16 build, stable certificate verification and artifact upload **PASSED**.
 - Artifact `9039921975`; artifact digest: `sha256:d2d5e96e06f51690e9025c53cb3adf6233a9887bf0024d0953eb38706b5f3fa9`.
 - Refresh/timestamp/error-state inspection on the OPPO target: **NOT VERIFIED / PENDING**.
+
+## 2026-08-09 — Premium design direction recorded
+
+- This is a documentation-only product-direction checkpoint; no production code was changed.
+- No new test, lint, build, APK or CI result is claimed for this note.
+- The next design/UX v1 milestone will require implementation, automated validation, APK inspection and physical visual inspection on the OPPO target before acceptance.

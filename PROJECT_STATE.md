@@ -87,6 +87,15 @@ The CPU probe milestone is deliberately a collector/capability slice, not a CPU 
 
 Snapshot lifecycle v1 is the next bounded slice on draft PR #10. It improves the trustworthiness of the existing point-in-time overview without adding history, permissions, background monitoring or new diagnosis claims. The branch is CI-verified; physical inspection remains the merge gate.
 
+## Product design direction — recorded, implementation pending
+
+- The user explicitly raised design quality to a first-class product requirement after reviewing the current overview screenshots.
+- The target is a distinctive, premium and emotionally compelling experience that aims above typical Google Play utility apps; “professional” is only the minimum bar.
+- The current UI remains a functional technical prototype, not the accepted final design. Large uniform cards, weak hierarchy and long technical paragraphs are recorded design debt.
+- The next bounded design milestone is the existing overview only: memorable first viewport, clear primary state, scan-friendly metrics, deliberate visual system, semantic state treatment and progressive disclosure for evidence.
+- No fake health/optimization score, fabricated CPU value, unsupported diagnosis or hidden limitation may be introduced for visual effect.
+- Implementation, CI and physical visual inspection on the OPPO target are required before the design can be called complete.
+
 ## Verification language
 
 - Matrix `VERIFIED` = feasibility supported by current documentation/reference evidence.

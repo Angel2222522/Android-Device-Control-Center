@@ -111,8 +111,17 @@
 - **Why:** `ActivityManager.MemoryInfo`, battery broadcasts/properties and thermal APIs are snapshot-oriented inputs. The Android `PowerManager.getThermalHeadroom()` documentation states that calling it more frequently than about once per second has no benefit and may return `NaN`; a user-triggered, throttled refresh keeps the product truthful and low-overhead.
 - **Source:** https://developer.android.com/reference/android/os/PowerManager#getThermalHeadroom(int)
 
+## D-020 — Premium, distinctive and desirable product experience
+
+- **Decision:** Treat visual quality and emotional desirability as a first-class product requirement. The app should feel distinctive, premium and compelling from the first launch, with an ambition above typical Google Play utility apps. “Professional” is the minimum bar, not the finish line.
+- **Why:** Device Control Center is intended to be opened repeatedly as a trusted device-intelligence surface, not experienced as a raw diagnostic dump. Strong composition, hierarchy and interaction quality are part of the product value.
+- **Design principles:** Establish a memorable first viewport, clear primary status, scan-friendly measurement surfaces, deliberate typography/spacing/shapes, semantic state colors, progressive disclosure for evidence and carefully chosen interaction feedback.
+- **Truth boundary:** Visual polish must never introduce a health score, fake optimization percentage, fabricated CPU value, unsupported diagnosis or hidden uncertainty. Provenance, limitations and unavailable states remain truthful and accessible.
+- **Scope boundary:** The next design milestone redesigns the existing overview first. It does not add permissions, background monitoring, history, optimization actions or speculative future screens.
+- **Acceptance:** Design is not accepted from compilation alone. It requires implementation, lint/tests, CI, APK inspection, physical visual inspection on the OPPO target and user review of the resulting experience.
+
 ## Open product decisions
 
 - SAF/MediaStore-first versus broad All Files Access posture.
 - Local-VPN firewall in main roadmap versus later optional module.
-- Brand personality and visual direction.
+- Final brand name, logo and exact identity.

@@ -5,7 +5,7 @@
 - [x] Use a public canonical GitHub repository.
 - [ ] User chooses storage-permission posture.
 - [ ] User decides whether the local-VPN firewall is core or later optional scope.
-- [ ] User chooses initial brand/experience direction.
+- [x] Record the premium, distinctive and emotionally compelling design/experience direction; final brand identity remains open.
 - [ ] Confirm product/license strategy before borrowing any implementation.
 - [ ] Accept or revise proposed milestones.
 
@@ -90,3 +90,17 @@
 - [x] Install the corrected APK over the current version and re-test the battery voltage path.
 - [x] Physically verify explicit unavailable voltage handling when no trusted source exists.
 - [x] Physically verify the factual battery snapshot rendering and merge PR #7.
+
+
+## Phase 2 — Premium design/UX v1 (next bounded milestone)
+
+- [x] Record the premium, distinctive and emotionally compelling design direction.
+- [x] Record the current overview's visual debt and the physical-device acceptance gate.
+- [ ] Define and implement a coherent visual language for the existing overview.
+- [ ] Make the first viewport communicate primary device state and attention item within seconds.
+- [ ] Replace uniform information walls with a clear scan-first hierarchy and progressive disclosure.
+- [ ] Preserve truthful measurements, provenance, limitations and unavailable states.
+- [ ] Add only presentation/state tests required by the redesign; do not add new capability scope.
+- [ ] Pass lint, unit tests, Android 16 build, signing verification and GitHub Actions.
+- [ ] Install and visually inspect the design milestone on the OPPO A60 5G.
+- [ ] Accept the first design milestone only after physical visual inspection and user review.
