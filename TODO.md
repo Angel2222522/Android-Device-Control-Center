@@ -18,7 +18,7 @@
 - [x] Add and CI-verify stable development-only signing in two independent builds.
 - [x] Remove the final ephemeral-signed installed build once.
 - [x] Verify clean installation and launch of the stable-signed APK.
-- [ ] Verify a later stable-signed APK updates in place without uninstalling.
+- [x] Verify a later stable-signed APK updates in place without uninstalling.
 - [ ] Establish separate production release-signing strategy without committed secrets.
 
 ## Phase 2 — Capability and permission center
@@ -32,4 +32,4 @@
 - [x] Validate thermal status/headroom interpretation against official Android documentation.
 - [x] Correct misleading thermal wording and add regression tests.
 - [x] Build and CI-verify the next stable-signed checkpoint.
-- [ ] Install it over the current version without uninstalling and inspect corrected thermal wording.
+- [x] Install it over the current version without uninstalling and inspect corrected thermal wording.
