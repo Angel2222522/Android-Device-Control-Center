@@ -120,6 +120,19 @@
 - [x] Pass CI, artifact integrity and target-device physical acceptance.
 - [x] Retarget and merge the canonical stack in order: PR10 → PR11 → PR12.
 
+## Completed milestone — unified capability v1 (CI-verified; physical gate pending)
+
+- [x] Add explicit Usage Access handling without automatic permission requests.
+- [x] Add seven-day aggregate app usage for visible launcher apps and StorageStats where available.
+- [x] Add read-only links from app rows to Android application settings.
+- [x] Add explicit SHA-256 exact-duplicate detection for selected folders or authorized shared storage.
+- [x] Bound duplicate inspection to 20,000 entries and 256 MiB of hashed content.
+- [x] Keep duplicate detection read-only: no delete, move, cleanup or automatic action.
+- [x] Add local history trends for battery, available storage and thermal context with a five-sample minimum.
+- [x] Add unit coverage for the three capability areas.
+- [x] Pass CI, lint, Android 16 build, stable certificate verification and artifact integrity.
+- [ ] Install the final APK on the OPPO A60 5G and inspect the new cards before merging PR #14.
+
 ## Next bounded milestone proposal
 
-- [ ] Personal-baseline v1: read-only comparison against existing local history, with a minimum-sample state and explicit evidence. No score, causal certainty, health claim or automatic action.
+- [ ] After physical acceptance, add only the next explicitly bounded capability; keep background monitoring, automatic cleanup and unsupported health/causal claims out of scope.
