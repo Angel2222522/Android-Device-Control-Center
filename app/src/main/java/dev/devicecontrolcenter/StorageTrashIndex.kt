@@ -4,6 +4,65 @@ import android.content.Context
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import java.nio.file.Files
+
+internal data class StorageTrashQuotaUsage(
+    val itemCount: Long,
+    val totalPayloadBytes: Long?,
+)
+
+internal object StorageTrashQuota {
+    const val MAX_ITEM_COUNT = 100L
+    const val MAX_TOTAL_PAYLOAD_BYTES = 512L * 1024L * 1024L
+
+    fun calculateUsage(payloadSizes: Iterable<Long?>): StorageTrashQuotaUsage {
+        var itemCount = 0L
+        var totalPayloadBytes = 0L
+        var allPayloadSizesKnown = true
+
+        payloadSizes.forEach { payloadSize ->
+            itemCount = saturatingAdd(itemCount, 1L)
+            val knownSize = payloadSize?.takeIf { it >= 0L }
+            if (knownSize == null) {
+                allPayloadSizesKnown = false
+            } else {
+                totalPayloadBytes = saturatingAdd(totalPayloadBytes, knownSize)
+            }
+        }
+
+        return StorageTrashQuotaUsage(
+            itemCount = itemCount,
+            totalPayloadBytes = totalPayloadBytes.takeIf { allPayloadSizesKnown },
+        )
+    }
+
+    fun canAccept(usage: StorageTrashQuotaUsage, newPayloadBytes: Long?): Boolean {
+        val currentPayloadBytes = usage.totalPayloadBytes ?: return false
+        val safeNewPayloadBytes = newPayloadBytes?.takeIf { it >= 0L } ?: return false
+        return saturatingAdd(usage.itemCount, 1L) <= MAX_ITEM_COUNT &&
+            saturatingAdd(currentPayloadBytes, safeNewPayloadBytes) <= MAX_TOTAL_PAYLOAD_BYTES
+    }
+
+    fun failureMessage(usage: StorageTrashQuotaUsage, newPayloadBytes: Long?): String = when {
+        usage.totalPayloadBytes == null || newPayloadBytes == null || newPayloadBytes < 0L ->
+            "Δεν ήταν δυνατός ο ασφαλής υπολογισμός του μεγέθους του ιδιωτικού κάδου. " +
+                "Η μετακίνηση ακυρώθηκε."
+
+        saturatingAdd(usage.itemCount, 1L) > MAX_ITEM_COUNT ->
+            "Ο ιδιωτικός κάδος έχει φτάσει το όριο των $MAX_ITEM_COUNT αντικειμένων. " +
+                "Επαναφέρετε ή αφαιρέστε ένα αρχείο και δοκιμάστε ξανά."
+
+        else ->
+            "Ο ιδιωτικός κάδος έχει φτάσει το όριο των " +
+                "${MAX_TOTAL_PAYLOAD_BYTES / (1024L * 1024L)} MiB συνολικών δεδομένων. " +
+                "Επαναφέρετε ή αφαιρέστε ένα αρχείο και δοκιμάστε ξανά."
+    }
+
+    internal fun saturatingAdd(left: Long, right: Long): Long {
+        if (left < 0L || right < 0L || Long.MAX_VALUE - left < right) return Long.MAX_VALUE
+        return left + right
+    }
+}
 
 /** Durable metadata for private-trash items. The payload itself remains app-private. */
 internal object StorageTrashIndex {
@@ -63,6 +122,17 @@ internal object StorageTrashIndex {
             name.none { it == '/' || it == '\\' || it == '\u0000' }
 
     fun addPrepared(context: Context, item: StorageTrashItem): Boolean = update(context) { records ->
+        val recordsWithoutReplacedItem = records.filterNot { it.id == item.id }
+        val usage = StorageTrashQuota.calculateUsage(
+            recordsWithoutReplacedItem.map { record ->
+                payloadSizeOrMetadata(context, record)
+            },
+        )
+        val newPayloadBytes = safePayloadLength(context, item.id)
+        check(StorageTrashQuota.canAccept(usage, newPayloadBytes)) {
+            StorageTrashQuota.failureMessage(usage, newPayloadBytes)
+        }
+
         val record = StorageTrashRecord(
             id = item.id,
             displayName = item.displayName,
@@ -77,7 +147,7 @@ internal object StorageTrashIndex {
             needsReview = false,
             createdAtMillis = System.currentTimeMillis(),
         )
-        listOf(record) + records.filterNot { it.id == item.id }
+        listOf(record) + recordsWithoutReplacedItem
     }
 
     fun markTrashed(context: Context, id: String): Boolean = update(context) { records ->
@@ -177,6 +247,27 @@ internal object StorageTrashIndex {
         return payloadFile(context, record.id)
             .takeIf { isSafePayload(context, it) }
     }
+
+    private fun payloadSizeOrMetadata(context: Context, record: StorageTrashRecord): Long? {
+        val payload = payloadFileOrNull(context, record)
+        if (payload == null) return record.sourceSizeBytes?.takeIf { it >= 0L }
+        safePayloadLength(payload)?.let { return it }
+        return if (payload.exists()) {
+            null
+        } else {
+            record.sourceSizeBytes?.takeIf { it >= 0L }
+        }
+    }
+
+    private fun safePayloadLength(context: Context, id: String): Long? = runCatching {
+        payloadFile(context, id)
+            .takeIf { isSafePayload(context, it) }
+            ?.let(::safePayloadLength)
+    }.getOrNull()
+
+    private fun safePayloadLength(payload: File): Long? = runCatching {
+        if (!payload.isFile) null else Files.size(payload.toPath()).takeIf { it >= 0L }
+    }.getOrNull()
 
     private fun read(context: Context): List<StorageTrashRecord>? {
         val raw = preferences(context).getString(ITEMS_KEY, null) ?: return emptyList()
