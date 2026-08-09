@@ -675,9 +675,13 @@ private fun CapabilityRoute(
                         is PendingReportExport.Plain -> export.content.toByteArray(Charsets.UTF_8)
                         is PendingReportExport.Encrypted -> EncryptedReportExport.encrypt(export.content)
                     }
-                    // Prepare everything before opening the destination stream.
-                    PendingReportExportStore.clear(context, kind)
-                    ReportExportWriter.write(context, uri, bytes)
+                    // Prepare everything before opening the destination stream. Keep the
+                    // private hand-off until the provider confirms a successful write so a
+                    // provider failure can be retried after recreation.
+                    writeThenClearPendingReport(
+                        write = { ReportExportWriter.write(context, uri, bytes) },
+                        clearPending = { PendingReportExportStore.clear(context, kind) },
+                    )
                     export
                 }
                 writeResult.onSuccess { export ->
@@ -686,7 +690,6 @@ private fun CapabilityRoute(
                         if (active.get()) Toast.makeText(context, export.successMessage, Toast.LENGTH_LONG).show()
                     }
                 }.onFailure { error ->
-                    PendingReportExportStore.clear(context, kind)
                     logAction(exportAction(kind), "failure", error.message)
                     mainHandler.post {
                         if (active.get()) showActionFailure("${exportLabel(kind)}: ${error.message ?: "άγνωστο σφάλμα"}")
@@ -695,7 +698,6 @@ private fun CapabilityRoute(
             }
         }
         submitResult.onFailure { error ->
-            PendingReportExportStore.clear(context, kind)
             logAction(exportAction(kind), "failure", error.message)
             showActionFailure("${exportLabel(kind)}: ${error.message ?: "η εργασία δεν ξεκίνησε"}")
         }
