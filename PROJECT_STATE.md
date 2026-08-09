@@ -1,8 +1,8 @@
 # Project State
 
 **Updated:** 2026-08-09  
-**Phase:** 1 — reproducible project foundation  
-**Production code:** foundation scaffold only; no diagnostic collectors
+**Phase:** 2 — capability and permission center  
+**Production code:** real device snapshot collector; diagnosis engine not started
 
 ## Completed in this session
 
@@ -16,13 +16,18 @@
 - Android 16-only Kotlin/Compose foundation created locally.
 - GitHub Actions workflow authored for lint, unit tests, debug build and APK artifact.
 - Physical installation and launch verified by user screenshot on the target Android 16 device.
+- Phase 2 collector implemented for RAM totals/threshold/low-memory flag, thermal status/headroom, storage totals, Usage Access and All Files Access state.
+- Pull request #1 passed lint, unit tests and debug assembly, then merged to `main` as `0ddf03c2d9b2f08c364b791ad91eb1d8df3d24e9`.
+- Agreed product scope consolidated in `PROJECT_SCOPE.md`.
 
 ## Current gate
 
-Phase 1 foundation is fully verified: CI passed and the APK installed/launched successfully on the target Android 16 device. Work proceeds to Phase 2 capability and permission center.
+Phase 2 code and CI are verified. APK `Device-Control-Center-capabilities-debug.apk` is ready. The current gate is physical-device verification of displayed RAM, thermal, storage and access states.
 
 ## Verification language
 
 - Matrix `VERIFIED` = feasibility supported by current documentation/reference evidence.
 - Implementation `VERIFIED` will require build + test + result inspection.
-- Foundation build pipeline and physical launch are VERIFIED. No diagnostic collector is verified yet.
+- Foundation build pipeline and physical launch are VERIFIED.
+- Phase 2 collector is CI-VERIFIED but remains PHYSICALLY UNVERIFIED.
+- No diagnosis or optimization action exists yet.

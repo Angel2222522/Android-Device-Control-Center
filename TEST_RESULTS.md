@@ -24,3 +24,19 @@ Future entries must include date, commit SHA, environment/device, exact command 
 - Physical Android 16 installation: **PASSED** — confirmed by user-provided screenshot.
 - Physical Android 16 launch/render: **PASSED** — activity remained open and rendered the expected Compose foundation screen.
 - Exact device telemetry: **NOT YET TESTED**.
+
+## 2026-08-09 — Phase 2 capability snapshot
+
+- Pull request: `#1`.
+- Tested head commit: `0f40dfcf662f8b7f648a2a716463194ebc5ccc61`.
+- Squash merge commit: `0ddf03c2d9b2f08c364b791ad91eb1d8df3d24e9`.
+- GitHub Actions run: `31312304385`.
+- Android SDK/toolchain setup: **PASSED**.
+- `lintDebug`: **PASSED**.
+- `testDebugUnitTest`: **PASSED**.
+- `assembleDebug`: **PASSED**.
+- Artifact upload: **PASSED** — artifact ID `9037728326`.
+- Extracted APK ZIP integrity: **PASSED**.
+- APK SHA-256: `6e21c96474ee91f202c237b8300790a1b97b6877b8274640b4986ada01839563`.
+- APK size: `27,014,110` bytes.
+- Target-device telemetry values and rendering: **UNVERIFIED**.

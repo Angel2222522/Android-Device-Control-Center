@@ -11,11 +11,11 @@
 - **Decision:** Android 16 / API 36 first. Root is never required. Shizuku is optional.
 - **Why:** The user targets a modern Android 16 device and does not want quality diluted for old versions.
 
-## D-003 — Native stack proposal
+## D-003 — Native stack
 
 - **Decision:** Kotlin, Jetpack Compose, Material 3, Coroutines/Flow, Room, DataStore and WorkManager. Dependency injection only when the object graph warrants it.
 - **Why:** Native API coverage, lifecycle correctness and production support.
-- **State:** Proposed; becomes locked after Phase 0 approval.
+- **State:** Locked and build-verified.
 
 ## D-004 — Analysis approach
 
@@ -43,9 +43,18 @@
 - **Decision:** Use `DeviceControlCenter` / `dev.devicecontrolcenter` only as internal placeholders during foundation work.
 - **Why:** Branding remains open and must not block technical verification.
 
+## D-009 — GitHub continuous project memory
+
+- **Decision:** Every material verified step, failed verification, scope change and newly discovered limitation must be recorded in the repository state documents during the same checkpoint.
+- **Why:** Chat memory is not ground truth. Code, current `main`, test evidence and explicit state files are.
+
+## D-010 — Public repository
+
+- **Decision:** The canonical repository is public: `Angel2222522/Android-Device-Control-Center`.
+- **Why:** Permanent zero-cost standard GitHub Actions and transparent development.
+
 ## Open product decisions
 
-- Public versus private GitHub repository; repository creation is externally blocked until the user supplies an existing repository.
 - SAF/MediaStore-first versus broad All Files Access posture.
 - Local-VPN firewall in main roadmap versus later optional module.
 - Brand personality and visual direction.

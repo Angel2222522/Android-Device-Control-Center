@@ -2,7 +2,7 @@
 
 ## Product decisions that remain open
 
-- [ ] User chooses public or private repository posture.
+- [x] Use a public canonical GitHub repository.
 - [ ] User chooses storage-permission posture.
 - [ ] User decides whether the local-VPN firewall is core or later optional scope.
 - [ ] User chooses initial brand/experience direction.
@@ -24,9 +24,9 @@
 
 ## Phase 2 — Capability and permission center
 
-- [ ] Implement device/RAM/thermal capability snapshot.
-- [ ] Implement Usage Access and All Files Access state detection without requesting them at launch.
-- [ ] Add truthful unavailable/unsupported states.
-- [ ] Add unit tests for presentation mapping.
-- [ ] Build, lint and test in CI.
+- [x] Implement device/RAM/thermal capability snapshot.
+- [x] Implement Usage Access and All Files Access state detection without requesting them at launch.
+- [x] Add truthful unavailable/unsupported states.
+- [x] Add unit tests for presentation mapping.
+- [x] Build, lint and test in CI.
 - [ ] Install on target phone and compare displayed data with Android system information.
