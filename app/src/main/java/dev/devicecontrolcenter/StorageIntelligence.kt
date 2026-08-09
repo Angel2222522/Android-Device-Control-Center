@@ -477,32 +477,33 @@ object StorageScanner {
                     context = context,
                     directoryUri = pending.uri,
                     shouldContinue = { check(shouldContinue()) { "Η σάρωση ακυρώθηκε." } },
-                ) { child ->
-                    accumulator.recordChild(pending.uri.toString())
-                    if (!accumulator.acceptEntry()) {
-                        false
-                    } else {
-                        if (child.mimeType == DocumentsContract.Document.MIME_TYPE_DIR) {
-                            pendingDirectories.addLast(
-                                PendingDocumentDirectory(
-                                    uri = child.uri,
-                                    name = child.name,
-                                    lastModifiedMillis = child.lastModifiedMillis,
-                                    parentUriString = pending.uri.toString(),
-                                ),
-                            )
+                    onChild = { child ->
+                        accumulator.recordChild(pending.uri.toString())
+                        if (!accumulator.acceptEntry()) {
+                            false
                         } else {
-                            accumulator.recordFile(
-                                name = child.name,
-                                sizeBytes = StorageMetadataReader.documentSize(context, child),
-                                lastModifiedMillis = child.lastModifiedMillis,
-                                uriString = child.uri.toString(),
-                                parentUriString = pending.uri.toString(),
-                            )
+                            if (child.mimeType == DocumentsContract.Document.MIME_TYPE_DIR) {
+                                pendingDirectories.addLast(
+                                    PendingDocumentDirectory(
+                                        uri = child.uri,
+                                        name = child.name,
+                                        lastModifiedMillis = child.lastModifiedMillis,
+                                        parentUriString = pending.uri.toString(),
+                                    ),
+                                )
+                            } else {
+                                accumulator.recordFile(
+                                    name = child.name,
+                                    sizeBytes = StorageMetadataReader.documentSize(context, child),
+                                    lastModifiedMillis = child.lastModifiedMillis,
+                                    uriString = child.uri.toString(),
+                                    parentUriString = pending.uri.toString(),
+                                )
+                            }
+                            true
                         }
-                        true
-                    }
-                },
+                    },
+                ),
             ) {
                 DocumentChildEnumerationResult.UNREADABLE ->
                     accumulator.recordUnreadableDirectory(pending.uri.toString())
