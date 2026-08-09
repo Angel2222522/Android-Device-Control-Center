@@ -17,7 +17,10 @@
 15. The first PR #7 CI run `31315368065` failed only at test compilation because of a nullable `Double` assertion; the production code compiled. Corrective commit `9ffe70d5a240c7d4e8e5e64c39bbafb4f3e829eb` was added.
 16. Corrected CI run `31315477707` passed lint, unit tests, Android 16 build, stable certificate verification and artifact upload.
 17. The single checkpoint APK is ready for physical inspection. Extracted APK SHA-256: `9f8ee46e05793606f33fe1959a7b7e94c4ae8ea246603f02a73954706ee97480`.
+18. The checkpoint was installed over the current app and inspected on the target. Level, state/source, temperature and charge-counter fields rendered; the Android broadcast returned `3 mV (0.003 V)` for voltage, which is physically implausible. Current was `929 μA` while discharging, so it remains a raw sensor value with no inferred direction.
+19. The battery milestone is therefore **PARTIALLY INSPECTED, NOT VERIFIED**. Do not merge PR #7 yet.
+20. The correction now in the working tree rejects broadcast voltage outside a conservative plausible envelope, tries only the standard read-only `power_supply` sysfs `voltage_now` path in μV, records the voltage source and shows unavailable when neither source is trustworthy.
 
 **Current production code:** real RAM/thermal/storage/access snapshot plus a factual battery snapshot; no diagnosis engine.
-**Verified:** CI, stable certificate, clean install, launch and previous telemetry rendering; battery implementation is CI-verified only.
-**First unfinished point:** install the battery checkpoint APK over the current app and physically inspect the new battery card. Keep the battery milestone UNVERIFIED until evidence is supplied.
+**Verified:** CI, stable certificate, clean install, launch and previous telemetry rendering; the first battery card inspection is partial and exposed an OEM voltage-quality failure.
+**First unfinished point:** run CI for the voltage-validation correction, install that single corrected checkpoint APK, and physically verify either a plausible voltage with source provenance or an explicit unavailable state. Keep the battery milestone UNVERIFIED until then.

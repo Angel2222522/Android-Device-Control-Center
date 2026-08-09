@@ -100,4 +100,13 @@
 - Battery tests cover level conversion, status/source labels, unit conversions and unsupported-property handling.
 - Artifact ID: `9038613946`; artifact digest: `sha256:7a4a12b561bf07ce81453dd663709a5c563efdedc47c8dac8f2a05fb00852bc8`.
 - Extracted APK SHA-256: `9f8ee46e05793606f33fe1959a7b7e94c4ae8ea246603f02a73954706ee97480`.
-- Physical installation and inspection on the target OPPO Android 16 phone: **PENDING**. No physical battery value is claimed yet.
+- Physical installation and inspection on the target OPPO Android 16 phone was pending at the time of this CI checkpoint; the subsequent target inspection is recorded below.
+
+## 2026-08-09 — Battery checkpoint physical inspection
+
+- Installed the stable-signed PR #7 checkpoint APK over the existing app: **PASSED**.
+- Target: OPPO A60 5G, Android/ColorOS 16.0.5; app launched and rendered the battery card: **PASSED**.
+- Physically observed: 66% level, discharging state, battery source, 36.3 °C temperature and 3,108 mAh charge counter. These are observed snapshot values, not battery-health or full-capacity estimates.
+- Voltage returned by the Android battery broadcast: `3 mV (0.003 V)`. This is physically implausible for a live phone and is **FAILED / NOT VERIFIED**.
+- Current returned: `929 μA (0.93 mA)` while the status was discharging. It is retained as a raw vendor sensor value; no drain direction or causal conclusion is claimed.
+- Decision: do not merge PR #7. Add plausibility validation, a standard read-only `power_supply` sysfs fallback where accessible, explicit voltage provenance and an unavailable state when no trusted value exists. No heuristic `3 -> 3000 mV` conversion will be added.

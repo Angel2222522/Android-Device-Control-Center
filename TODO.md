@@ -46,6 +46,10 @@
 - [x] Add explicit unavailable states and avoid battery-health/capacity claims.
 - [x] Add unit tests for battery conversion, labels and unsupported properties.
 - [x] Pass CI build, lint, unit tests, stable certificate verification and artifact upload.
-- [ ] Install the single milestone APK over the current stable-signed app.
-- [ ] Physically inspect battery level, charging state/source, temperature, voltage and optional properties.
-- [ ] Record target-device evidence and merge PR #7 after physical verification.
+- [x] Install the first milestone APK over the current stable-signed app and inspect the battery card.
+- [x] Confirm level, status/source, temperature and charge-counter rendering on the target phone.
+- [x] Detect and record the target device's physically implausible `3 mV` voltage result; keep it unverified.
+- [x] Implement plausibility gating, source provenance and standard read-only `power_supply` fallback for voltage.
+- [ ] Build and CI-verify the corrected battery checkpoint APK.
+- [ ] Install the corrected APK over the current version and re-test the battery voltage path.
+- [ ] Physically verify a plausible voltage or explicit unavailable state and then merge PR #7.

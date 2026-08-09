@@ -83,6 +83,12 @@
 - **Rejected:** Battery-health percentage, full-capacity claim, universal charging-time claim or optimisation action before a qualified multi-session evidence model exists.
 - **Why:** The public APIs expose current state and optional fuel-gauge readings, not an authoritative universal health value. Vendor support and sensor semantics vary.
 
+## D-016 — Reject untrusted battery voltage
+
+- **Decision:** Accept Android's battery-broadcast voltage only inside a conservative plausible phone-battery range. If it fails validation, try the standard read-only `power_supply` sysfs `voltage_now` source in μV and convert it to mV. Preserve the source in the snapshot.
+- **Rejected:** Converting an OEM value such as `3` to `3000 mV` by heuristic. If no trusted source is available, show `μη διαθέσιμη` and explain that the value was rejected or absent.
+- **Why:** The target OPPO returned `3 mV (0.003 V)` for a live phone. The official Android/AOSP contract describes the broadcast voltage as mV and the standard power-supply voltage file as μV, but the target's observed value violates the expected physical range. Truthful unavailability is safer than a plausible-looking fabricated conversion.
+
 ## Open product decisions
 
 - SAF/MediaStore-first versus broad All Files Access posture.

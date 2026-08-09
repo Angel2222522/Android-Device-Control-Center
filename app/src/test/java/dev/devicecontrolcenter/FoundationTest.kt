@@ -82,6 +82,7 @@ class FoundationTest {
         assertEquals(2, snapshot.plugged)
         assertEquals(27.5, checkNotNull(snapshot.temperatureCelsius), 0.001)
         assertEquals(4_200, snapshot.voltageMillivolts)
+        assertEquals(BatteryVoltageSource.ANDROID_BROADCAST, snapshot.voltageSource)
         assertEquals(1_500_000, snapshot.currentNowMicroamps)
         assertEquals(1_200_000, snapshot.currentAverageMicroamps)
         assertEquals(4_000_000, snapshot.chargeCounterMicroampHours)
@@ -106,6 +107,7 @@ class FoundationTest {
         assertNull(snapshot.plugged)
         assertNull(snapshot.temperatureCelsius)
         assertNull(snapshot.voltageMillivolts)
+        assertEquals(BatteryVoltageSource.UNAVAILABLE_OR_REJECTED, snapshot.voltageSource)
         assertNull(snapshot.currentNowMicroamps)
         assertNull(snapshot.currentAverageMicroamps)
         assertNull(snapshot.chargeCounterMicroampHours)
@@ -115,11 +117,61 @@ class FoundationTest {
     }
 
     @Test
+    fun rejectsImplausibleBroadcastVoltageAndUsesStandardSysfsFallback() {
+        val snapshot = BatterySnapshotReader.fromRaw(
+            level = 66,
+            scale = 100,
+            status = android.os.BatteryManager.BATTERY_STATUS_DISCHARGING,
+            plugged = 0,
+            temperatureTenthsCelsius = 363,
+            voltageMillivolts = 3,
+            readIntProperty = { Int.MIN_VALUE },
+            readLongProperty = { Long.MIN_VALUE },
+            readSysfsVoltageMillivolts = {
+                BatteryVoltageReader.normalizeSysfsMicrovolts(3_700_000L)
+            },
+        )
+
+        assertEquals(3_700, snapshot.voltageMillivolts)
+        assertEquals(BatteryVoltageSource.SYSFS_POWER_SUPPLY, snapshot.voltageSource)
+        assertEquals(
+            "Τάση: 3700 mV (3.700 V) · Πηγή τάσης: power_supply sysfs",
+            BatteryPresentation.voltageLabel(snapshot.voltageMillivolts, snapshot.voltageSource),
+        )
+    }
+
+    @Test
+    fun rejectsImplausibleVoltageWhenNoTrustedFallbackExists() {
+        val snapshot = BatterySnapshotReader.fromRaw(
+            level = 66,
+            scale = 100,
+            status = android.os.BatteryManager.BATTERY_STATUS_DISCHARGING,
+            plugged = 0,
+            temperatureTenthsCelsius = 363,
+            voltageMillivolts = 3,
+            readIntProperty = { Int.MIN_VALUE },
+            readLongProperty = { Long.MIN_VALUE },
+            readSysfsVoltageMillivolts = { null },
+        )
+
+        assertNull(snapshot.voltageMillivolts)
+        assertEquals(BatteryVoltageSource.UNAVAILABLE_OR_REJECTED, snapshot.voltageSource)
+        assertEquals(
+            "Τάση: μη διαθέσιμη · Πηγή τάσης: μη διαθέσιμη ή απορρίφθηκε ως μη αξιόπιστη",
+            BatteryPresentation.voltageLabel(snapshot.voltageMillivolts, snapshot.voltageSource),
+        )
+    }
+
+    @Test
     fun batteryPresentationUsesExplicitUnitsAndSourceLabels() {
         assertEquals("Φορτίζει", BatteryPresentation.statusLabel(android.os.BatteryManager.BATTERY_STATUS_CHARGING))
         assertEquals("Τροφοδοσία USB", BatteryPresentation.pluggedLabel(android.os.BatteryManager.BATTERY_PLUGGED_USB))
         assertEquals("Θερμοκρασία: 27.5 °C", BatteryPresentation.temperatureLabel(27.5))
         assertEquals("Τάση: 4200 mV (4.200 V)", BatteryPresentation.voltageLabel(4_200))
+        assertEquals(
+            "Android battery broadcast",
+            BatteryPresentation.voltageSourceLabel(BatteryVoltageSource.ANDROID_BROADCAST),
+        )
         assertEquals("Ρεύμα: -500000 μA (-500.00 mA)", BatteryPresentation.currentLabel(-500_000))
         assertEquals("Μετρητής φόρτισης: 4000000 μAh (4000.00 mAh)", BatteryPresentation.chargeCounterLabel(4_000_000))
         assertEquals("Μετρητής ενέργειας: 12345678901 nWh (12.346 Wh)", BatteryPresentation.energyCounterLabel(12_345_678_901L))
