@@ -28,8 +28,11 @@
 - [x] Add truthful unavailable/unsupported states.
 - [x] Add unit tests and pass CI.
 - [x] Physically install and render the snapshot on the target phone.
-- [ ] Compare RAM and storage values with Android system information.
+- [x] Compare RAM and storage values with Android/OPPO system information.
 - [x] Validate thermal status/headroom interpretation against official Android documentation.
 - [x] Correct misleading thermal wording and add regression tests.
 - [x] Build and CI-verify the next stable-signed checkpoint.
 - [x] Install it over the current version without uninstalling and inspect corrected thermal wording.
+- [x] Add advertised physical RAM alongside kernel-accessible RAM.
+- [x] Relabel storage value as the app-data filesystem rather than marketed total storage.
+- [ ] Physically inspect the new RAM/storage truth labels.
