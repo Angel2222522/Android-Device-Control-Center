@@ -11,6 +11,7 @@ import android.os.StatFs
 import java.util.Locale
 
 data class DeviceSnapshot(
+    val advertisedMemoryBytes: Long,
     val totalMemoryBytes: Long,
     val availableMemoryBytes: Long,
     val lowMemoryThresholdBytes: Long,
@@ -32,6 +33,7 @@ object DeviceSnapshotReader {
         val headroom = powerManager.getThermalHeadroom(0).takeUnless(Float::isNaN)
 
         return DeviceSnapshot(
+            advertisedMemoryBytes = memory.advertisedMem,
             totalMemoryBytes = memory.totalMem,
             availableMemoryBytes = memory.availMem,
             lowMemoryThresholdBytes = memory.threshold,
@@ -76,4 +78,9 @@ object SnapshotPresentation {
     )
 
     fun accessLabel(granted: Boolean): String = if (granted) "Ενεργή" else "Δεν έχει δοθεί"
+
+    fun memoryDetail(advertisedBytes: Long, kernelBytes: Long, thresholdBytes: Long): String =
+        "Εγκατεστημένη φυσική RAM ${gib(advertisedBytes)} · " +
+            "Προσβάσιμη στον πυρήνα ${gib(kernelBytes)} · " +
+            "Όριο χαμηλής μνήμης ${gib(thresholdBytes)}"
 }
