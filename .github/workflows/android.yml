@@ -50,9 +50,9 @@ jobs:
       - name: Verify debug and minified release builds
         run: |
           gradle --no-daemon --stacktrace \
-            lintDebug lintRelease \
-            testDebugUnitTest testReleaseUnitTest \
-            assembleDebug assembleRelease
+            lintDebug testDebugUnitTest assembleDebug
+          gradle --no-daemon --stacktrace \
+            lintRelease testReleaseUnitTest assembleRelease
 
       - name: Verify stable debug certificate
         run: |
