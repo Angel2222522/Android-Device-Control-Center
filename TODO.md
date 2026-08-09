@@ -39,6 +39,17 @@
 - [x] Identify and correct decimal GB versus binary GiB labelling defect.
 - [x] Physically verify corrected GB/GiB rendering.
 
+## Phase 2 — Diagnosis engine v1 (current slice)
+
+- [x] Verify official `ActivityManager.MemoryInfo` and `PowerManager` semantics before implementing rules.
+- [x] Define versioned, evidence-first rules for low-memory state, thermal status and battery-voltage data quality.
+- [x] Implement the current-snapshot diagnosis report and Compose presentation without score or automatic action.
+- [x] Add unit coverage for stable state, memory pressure, thermal severity, data quality and deterministic ordering.
+- [x] Pass GitHub Actions lint, unit tests, Android 16 build, signing verification and artifact upload.
+- [x] Install the milestone APK over the current stable-signed app and inspect the diagnosis card.
+- [x] Physically verify the diagnosis output on the target phone, including the expected unavailable voltage limitation.
+- [ ] Merge the verified diagnosis-engine v1 checkpoint.
+
 ## Phase 2 — Battery factual snapshot
 
 - [x] Verify official Android 16 battery API semantics and units.
