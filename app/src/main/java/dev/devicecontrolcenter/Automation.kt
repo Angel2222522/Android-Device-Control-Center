@@ -39,10 +39,10 @@ class LocalSnapshotWorker(
             }
             writeResult
         }
-        if (writeResult.status == HistoryWriteStatus.RECORDED && writeResult.actionRecorded) {
-            Result.success()
-        } else {
-            Result.failure()
+        when {
+            writeResult.status == HistoryWriteStatus.SKIPPED_BEFORE_CLEAR -> Result.success()
+            writeResult.status == HistoryWriteStatus.RECORDED && writeResult.actionRecorded -> Result.success()
+            else -> Result.retry()
         }
     } catch (cancellation: CancellationException) {
         throw cancellation
