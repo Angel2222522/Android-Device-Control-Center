@@ -143,4 +143,7 @@
 - Findings include rule ID/version, condition or data-quality type, product severity, raw-derived evidence and limitations. The report has no generic score and performs no action.
 - Unit tests were added for stable state, low-memory warning, severe/critical thermal states, battery data-quality reporting and deterministic ordering.
 - Local Gradle execution: **NOT RUN** in the inspection workspace; GitHub Actions remains the build/test gate.
-- Diagnosis engine v1 implementation, CI, APK inspection and target-phone physical verification: **NOT VERIFIED / PENDING**.
+- GitHub Actions run `31317443100`: lint, unit tests, Android 16 build, stable-certificate verification and artifact upload **PASSED**.
+- Artifact `9039174070`; artifact digest: `sha256:64307230b197a03646d5b36838ef948e7db84882d243f448097f14d3faf23070`.
+- Extracted APK SHA-256: `eb87948a2b259cca9624724b491634f5ac45de9a2daa6d362f4c6c2911bd9d0b`.
+- Diagnosis engine v1 implementation and CI: **VERIFIED**. APK installation/inspection and target-phone physical verification: **PENDING**.

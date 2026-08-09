@@ -29,7 +29,9 @@
 - The first slice evaluates only Android's official low-memory flag, current thermal status and battery-voltage data quality.
 - It deliberately has no score, no arbitrary memory ratio, no app-level causal attribution, no battery-health estimate, no history/baseline and no automatic action.
 - Unit coverage was added for stable state, low-memory state, severe/critical thermal states, data-quality findings and stable ordering.
-- CI, APK inspection and target-phone physical verification are still pending for this slice.
+- GitHub Actions run `31317443100` passed lint, unit tests, Android 16 build, stable-certificate verification and artifact upload.
+- CI artifact `9039174070` has digest `sha256:64307230b197a03646d5b36838ef948e7db84882d243f448097f14d3faf23070`; extracted APK SHA-256 is `eb87948a2b259cca9624724b491634f5ac45de9a2daa6d362f4c6c2911bd9d0b`.
+- APK inspection and target-phone physical verification are still pending for this slice.
 
 ## Physical Phase 2 observations
 
@@ -51,7 +53,7 @@ The corrected checkpoint is commit `fff926687aeec0b4c2e7058c3efe80060a6e0eb`, CI
 
 The merge commit is `76eb50e29dee6cb72310c47416961d9b601d9bad`; current `main` was checked directly after merge. The successful validation run remains `31316180145`.
 
-The first unfinished product point is now the diagnosis-engine v1 checkpoint described above. The implementation is on the dedicated diagnosis branch; it must pass GitHub Actions and then be inspected on the target phone before it can be called verified or merged.
+The first unfinished product point is now physical inspection of the diagnosis-engine v1 APK. The implementation is on the dedicated diagnosis branch and passed GitHub Actions; it must be installed over the current stable-signed app and inspected on the target phone before it can be called physically verified or merged.
 
 ## Verification language
 
@@ -60,6 +62,6 @@ The first unfinished product point is now the diagnosis-engine v1 checkpoint des
 - Foundation build pipeline and physical launch are VERIFIED.
 - Phase 2 telemetry collection/rendering is PHYSICALLY VERIFIED; corrected thermal presentation is PHYSICALLY VERIFIED.
 - Battery snapshot implementation and truthful unavailable-voltage handling are PHYSICALLY VERIFIED. A usable voltage measurement is NOT AVAILABLE on this target; the rejected vendor value is not presented as a measurement.
-- The diagnosis-engine v1 implementation exists on the checkpoint branch but is NOT VERIFIED until CI, APK inspection and target-device inspection pass.
+- The diagnosis-engine v1 implementation and CI are VERIFIED on the checkpoint branch, but target-device behavior is NOT VERIFIED until APK installation and inspection pass.
 - No optimization action exists, and the diagnosis engine executes no action automatically.
 - Stable debug signing, clean installation and subsequent in-place update are PHYSICALLY VERIFIED.

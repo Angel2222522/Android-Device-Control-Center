@@ -4,7 +4,7 @@ Android 16-first, local-first device intelligence and guided-control application
 
 The project is in **Phase 2: capability and permission center**.
 
-Phase 1 foundation and the RAM/thermal/storage/access snapshot are verified in CI and on the target Android 16 phone. The factual battery snapshot and truthful unavailable-voltage handling are physically verified; this target does not expose a usable voltage measurement. The first deterministic diagnosis-engine slice is implemented on a checkpoint branch and awaits CI plus physical inspection; it performs no automatic action.
+Phase 1 foundation and the RAM/thermal/storage/access snapshot are verified in CI and on the target Android 16 phone. The factual battery snapshot and truthful unavailable-voltage handling are physically verified; this target does not expose a usable voltage measurement. The first deterministic diagnosis-engine slice is CI-verified on a checkpoint branch and awaits physical inspection; it performs no automatic action.
 
 ## Product contract
 
