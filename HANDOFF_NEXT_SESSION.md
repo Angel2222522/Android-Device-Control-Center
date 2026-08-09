@@ -16,4 +16,4 @@
 
 **Current production code:** real RAM/thermal/storage/access snapshot; no diagnosis engine.  
 **Verified:** CI, stable certificate, clean install, launch and telemetry rendering.  
-**First unfinished point:** physically verify corrected GB/GiB rendering from PR #6.
+**First unfinished point:** start the next Phase 2 capability milestone from current `main`; GB/GiB, RAM semantics, storage semantics and stable updates are verified.
