@@ -62,7 +62,7 @@
 - [x] Physically verify the target's explicit `/proc/stat` unavailable state; do not fabricate a numeric CPU percentage.
 - [x] Mark PR #9 ready and merge the verified CPU activity probe checkpoint.
 
-## Phase 2 — Snapshot lifecycle v1 (current checkpoint)
+## Phase 2 — Snapshot lifecycle v1 (merged checkpoint)
 
 - [x] Define a user-triggered refresh boundary without background monitoring.
 - [x] Keep collection off the Compose/UI thread and reject concurrent refreshes.
@@ -71,9 +71,9 @@
 - [x] Preserve the last valid snapshot and show a retryable error state after collection failure.
 - [x] Add unit coverage for refresh gating, state transitions and timestamp presentation.
 - [x] Pass GitHub Actions lint, unit tests, Android 16 build, signing verification and artifact upload.
-- [ ] Install the milestone APK over the current stable-signed app and inspect the refresh control.
-- [ ] Physically verify refresh, timestamp, repeated-tap protection and failure-state behavior on the target phone.
-- [ ] Merge the physically verified snapshot lifecycle checkpoint.
+- [x] Install the milestone APK over the current stable-signed app and inspect the refresh control.
+- [x] Physically verify refresh, timestamp, repeated-tap protection and failure-state behavior on the target phone.
+- [x] Merge the physically verified snapshot lifecycle checkpoint.
 
 ## Phase 2 — Battery factual snapshot
 
@@ -92,7 +92,7 @@
 - [x] Physically verify the factual battery snapshot rendering and merge PR #7.
 
 
-## Phase 2 — Premium design/UX v1 (next bounded milestone)
+## Phase 2 — Premium design/UX v1 (accepted first baseline)
 
 - [x] Record the premium, distinctive and emotionally compelling design direction.
 - [x] Record the current overview's visual debt and the physical-device acceptance gate.
@@ -107,3 +107,19 @@
 
 - [x] Accept the design milestone as the first baseline after corrective physical inspection and user review.
 - [ ] Revisit premium design polish in a later phase after functional milestones progress.
+
+## Phase 2 — Device Intelligence v1 (merged checkpoint)
+
+- [x] Add local Room snapshot history with a 120-successful-snapshot retention limit.
+- [x] Persist only successful snapshots locally; do not synchronize or upload them.
+- [x] Add explicit SAF folder selection with read-only metadata scanning.
+- [x] Add largest files, oldest files and same-size candidate groups without calling them confirmed duplicates.
+- [x] Add adaptive B/KiB/MiB/GiB size presentation and provider-size fallback behavior.
+- [x] Add optional explicitly triggered shared-storage metadata scanning after Android special access.
+- [x] Keep content hashing, deletion, movement, background scanning and automatic permission requests out of scope.
+- [x] Pass CI, artifact integrity and target-device physical acceptance.
+- [x] Retarget and merge the canonical stack in order: PR10 → PR11 → PR12.
+
+## Next bounded milestone proposal
+
+- [ ] Personal-baseline v1: read-only comparison against existing local history, with a minimum-sample state and explicit evidence. No score, causal certainty, health claim or automatic action.
