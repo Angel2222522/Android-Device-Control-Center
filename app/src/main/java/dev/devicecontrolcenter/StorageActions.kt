@@ -267,7 +267,12 @@ object StorageTrashService {
      * persists the recovery metadata, and then deletes the original explicitly requested by
      * the caller. This method never asks for confirmation itself.
      */
-    fun moveToTrash(context: Context, entry: StorageFileEntry): StorageTrashItem {
+    fun moveToTrash(context: Context, entry: StorageFileEntry): StorageTrashItem =
+        StorageTrashIndex.withOperationLock {
+            moveToTrashLocked(context, entry)
+        }
+
+    private fun moveToTrashLocked(context: Context, entry: StorageFileEntry): StorageTrashItem {
         val appContext = context.applicationContext
         val original = entry.uriString?.takeIf(String::isNotBlank)
             ?: error("Δεν υπάρχει ασφαλής αναφορά στο αρχείο.")
