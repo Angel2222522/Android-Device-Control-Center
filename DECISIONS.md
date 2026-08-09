@@ -97,6 +97,13 @@
 - **Rejected:** Arbitrary available/total-memory ratios, universal health or optimisation scores, per-app causal claims, history-dependent conclusions and automatic actions in this first slice.
 - **Why:** The official public APIs provide trustworthy current signals, while ratios, attribution and health require additional evidence, baselines and device-specific validation. A narrow explainable slice can be tested and physically inspected without pretending to be a complete diagnosis system.
 
+## D-018 — CPU activity starts as a probed collector, not a diagnosis claim
+
+- **Decision:** Add a read-only CPU activity probe based on two aggregate `/proc/stat` counter samples over a 250 ms window, collected away from the UI thread. Preserve an explicit unavailable state when procfs is inaccessible or malformed.
+- **Boundary:** The result is whole-device counter-derived activity. It is not CPU performance, frequency, temperature, per-app attribution or a cause of slowness, and it does not yet create a diagnosis finding.
+- **Rejected:** Fabricating a device-wide percentage from the current app's `Debug.threadCpuTimeNanos()`, presenting Android Studio/Perfetto profiling as a runtime public API, or treating `/proc/stat` as a universal Android contract.
+- **Why:** Android's public `Debug` CPU-time API measures the current thread, while system-wide CPU inspection is exposed through profiling/tracing tools rather than a stable ordinary-app runtime API. Procfs can provide useful evidence on some devices, but its accessibility and semantics remain kernel/OEM dependent.
+
 ## Open product decisions
 
 - SAF/MediaStore-first versus broad All Files Access posture.

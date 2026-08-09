@@ -2,7 +2,7 @@
 
 **Updated:** 2026-08-09  
 **Phase:** 2 — capability and permission center  
-**Production code:** real device and battery snapshot collectors; first deterministic diagnosis-engine slice implemented on the current checkpoint branch
+**Production code:** real device/battery snapshot collectors, diagnosis-engine v1 and CPU activity probe v1 implementation on the current checkpoint branch
 
 ## Completed
 
@@ -36,6 +36,14 @@
 - Physical screenshot evidence showed `lowMemory=false`, current thermal status without restriction, and the target's voltage remaining unavailable/rejected as untrusted. The displayed RAM, battery and storage values were treated as dynamic snapshot values.
 - Diagnosis engine v1 is now PHYSICALLY VERIFIED on the target. PR #8 was merged as `d55decfa4d09ee2d662588695eaaa029a50e5583`, and `main` now contains the milestone.
 
+## Current milestone — CPU activity probe v1 implementation checkpoint
+
+- Added a read-only, capability-probed device-level CPU activity collector using two `/proc/stat` counter samples over a 250 ms window.
+- Collection runs off the Compose/UI thread. If procfs is unavailable, malformed or restricted by the OEM/kernel, the snapshot remains explicitly unavailable.
+- The displayed value is derived whole-device counter activity, not CPU speed, frequency, temperature, app attribution or a diagnosis finding.
+- Added parser, counter-delta, invalid-input and unavailable-state unit coverage.
+- GitHub Actions, APK inspection and target-phone physical verification are pending for this slice.
+
 ## Physical Phase 2 observations
 
 - RAM: 3.53 GB total, 1.13 GB available, 0.42 GB low-memory threshold; Android did not report low memory.
@@ -58,6 +66,8 @@ The merge commit is `76eb50e29dee6cb72310c47416961d9b601d9bad`; current `main` w
 
 The diagnosis-engine v1 implementation has passed CI and physical inspection on the target phone. PR #8 was merged as `d55decfa4d09ee2d662588695eaaa029a50e5583`; direct `main` inspection confirmed that this is the current HEAD.
 
+The next bounded milestone is CPU activity probe v1. It is deliberately a collector/capability slice, not a CPU diagnosis claim. It must pass CI and target inspection before the source is treated as usable on the OPPO device.
+
 ## Verification language
 
 - Matrix `VERIFIED` = feasibility supported by current documentation/reference evidence.
@@ -66,5 +76,6 @@ The diagnosis-engine v1 implementation has passed CI and physical inspection on 
 - Phase 2 telemetry collection/rendering is PHYSICALLY VERIFIED; corrected thermal presentation is PHYSICALLY VERIFIED.
 - Battery snapshot implementation and truthful unavailable-voltage handling are PHYSICALLY VERIFIED. A usable voltage measurement is NOT AVAILABLE on this target; the rejected vendor value is not presented as a measurement.
 - The diagnosis-engine v1 implementation, CI and target-device behavior are PHYSICALLY VERIFIED and are now present on `main` after PR #8 merge.
+- CPU activity probe v1 exists on the checkpoint branch but is NOT VERIFIED until CI, APK inspection and target-device inspection pass.
 - No optimization action exists, and the diagnosis engine executes no action automatically.
 - Stable debug signing, clean installation and subsequent in-place update are PHYSICALLY VERIFIED.

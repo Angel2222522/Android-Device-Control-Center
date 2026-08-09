@@ -1,6 +1,9 @@
 package dev.devicecontrolcenter
 
+import android.content.Context
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -18,10 +21,14 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -29,8 +36,56 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MaterialTheme(colorScheme = lightColorScheme()) {
-                CapabilityScreen(snapshot = remember { DeviceSnapshotReader.read(this) })
+                CapabilityRoute(context = this@MainActivity)
             }
+        }
+    }
+}
+
+@Composable
+private fun CapabilityRoute(context: Context) {
+    val snapshotState = remember { mutableStateOf<DeviceSnapshot?>(null) }
+
+    DisposableEffect(context) {
+        val executor = Executors.newSingleThreadExecutor()
+        val mainHandler = Handler(Looper.getMainLooper())
+        val active = AtomicBoolean(true)
+        executor.execute {
+            val snapshot = DeviceSnapshotReader.read(context)
+            if (active.get()) {
+                mainHandler.post {
+                    if (active.get()) snapshotState.value = snapshot
+                }
+            }
+        }
+        onDispose {
+            active.set(false)
+            executor.shutdownNow()
+        }
+    }
+
+    val snapshot = snapshotState.value
+    if (snapshot == null) {
+        LoadingScreen()
+    } else {
+        CapabilityScreen(snapshot)
+    }
+}
+
+@Composable
+private fun LoadingScreen() {
+    Scaffold(modifier = Modifier.fillMaxSize()) { contentPadding ->
+        Column(
+            modifier = Modifier
+                .padding(contentPadding)
+                .padding(horizontal = 20.dp, vertical = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Text(text = "Κατάσταση συσκευής", style = MaterialTheme.typography.headlineLarge)
+            Text(
+                text = "Συλλογή στιγμιότυπου συσκευής…",
+                style = MaterialTheme.typography.bodyLarge,
+            )
         }
     }
 }
@@ -72,6 +127,12 @@ private fun CapabilityScreen(snapshot: DeviceSnapshot) {
                 detail = snapshot.thermalHeadroom?.let(SnapshotPresentation::thermalEnvelopeLabel)
                     ?: "Η συσκευή δεν επέστρεψε μέτρηση θερμικού ορίου τώρα",
                 status = "Δεν γίνεται ακόμη απόδοση αιτίας σε εφαρμογή",
+            )
+            MetricCard(
+                title = "Δραστηριότητα CPU",
+                primary = CpuPresentation.activityLabel(snapshot.cpu.activityPercent),
+                detail = CpuPresentation.detail(snapshot.cpu),
+                status = CpuPresentation.statusLabel(snapshot.cpu),
             )
             MetricCard(
                 title = "Μπαταρία",

@@ -50,6 +50,17 @@
 - [x] Physically verify the diagnosis output on the target phone, including the expected unavailable voltage limitation.
 - [x] Merge the verified diagnosis-engine v1 checkpoint.
 
+## Phase 2 — CPU activity probe v1 (current slice)
+
+- [x] Verify the Android public-API boundary for device-wide CPU activity and current-thread CPU time.
+- [x] Define the read-only `/proc/stat` probe, 250 ms counter window and explicit unavailable state.
+- [x] Implement background collection and truthful CPU activity presentation without a diagnosis claim.
+- [x] Add parser, counter-delta, invalid-input and unavailable-state unit tests.
+- [ ] Pass GitHub Actions lint, unit tests, Android 16 build, signing verification and artifact upload.
+- [ ] Install the milestone APK over the current stable-signed app and inspect the CPU card.
+- [ ] Physically verify whether `/proc/stat` is readable and whether the displayed activity is plausible on the target.
+- [ ] Merge the verified CPU activity probe checkpoint.
+
 ## Phase 2 — Battery factual snapshot
 
 - [x] Verify official Android 16 battery API semantics and units.

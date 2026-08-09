@@ -164,3 +164,11 @@
 - Merge commit: `d55decfa4d09ee2d662588695eaaa029a50e5583`.
 - Direct repository inspection confirmed that `main` points to the merge commit.
 - The diagnosis-engine v1 milestone is now **CI-VERIFIED, PHYSICALLY VERIFIED AND MERGED**.
+
+## 2026-08-09 — CPU activity probe v1 implementation checkpoint
+
+- Android public-API boundary checked before implementation: current-thread CPU time is not a device-wide load measurement; system-wide profiling/tracing is not treated as an ordinary runtime API.
+- Implemented a read-only `/proc/stat` aggregate-counter probe with two samples over a 250 ms window, collected off the UI thread.
+- Added explicit unavailable behavior for inaccessible/malformed procfs and tests for parsing, counter deltas, invalid input and unavailable state.
+- The result is intentionally presented as short-window whole-device activity, not speed, frequency, temperature, app attribution or a diagnosis.
+- CPU activity probe v1 code, CI, APK inspection and target-phone physical verification: **NOT VERIFIED / PENDING**.

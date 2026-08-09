@@ -31,7 +31,9 @@
 28. The milestone APK was installed over the current stable-signed app without uninstalling and inspected on the target. The diagnosis card rendered correctly: no active memory-pressure finding, one informational unavailable/rejected-voltage finding, evidence/limitations/rule version, and no automatic action.
 29. Physical snapshot values included 58% battery, 35.1 °C, 1.04 GiB available RAM, `lowMemory=false`, no current thermal restriction, and 28.26 GiB available app-data storage. These values are dynamic; the target voltage remains unavailable and must not be inferred.
 30. PR #8 was marked ready and merged as `d55decfa4d09ee2d662588695eaaa029a50e5583`. Direct repository inspection confirmed `origin/main` and the latest `main` commit point to this merge commit.
+31. The next bounded milestone is branch `feature/cpu-activity-probe-v1`. It adds a read-only `/proc/stat` two-sample CPU activity probe over 250 ms, collected off the UI thread, with explicit unavailable behavior.
+32. The CPU value is intentionally not a diagnosis, CPU-speed claim or per-app attribution. The implementation has parser/counter-delta/unavailable tests; CI, APK inspection and target verification are pending.
 
-**Current production code:** real RAM/thermal/storage/access snapshot plus a factual battery snapshot and diagnosis-engine v1; the diagnosis milestone is CI-verified, physically verified and merged into `main`.
+**Current production code:** real RAM/thermal/storage/access snapshot plus a factual battery snapshot and diagnosis-engine v1 on `main`; CPU activity probe v1 is on the checkpoint branch and not yet verified.
 **Verified:** diagnosis-engine v1 CI and target inspection, stable certificate, previous clean install/in-place updates, previous telemetry rendering, factual battery snapshot and truthful rejection of the target's invalid voltage.
-**First unfinished point:** begin the next bounded diagnosis-engine slice only after reading the merged `main` state. Preserve the target limitation: battery voltage is unavailable and must not be inferred; do not add health/capacity claims.
+**First unfinished point:** run CI for `feature/cpu-activity-probe-v1`, then produce one APK for CPU-card inspection. Preserve the target limitation: battery voltage is unavailable and must not be inferred; do not add health/capacity claims.
