@@ -62,3 +62,12 @@
 - Shared-storage scanning requires explicit `MANAGE_EXTERNAL_STORAGE` special access and remains limited to readable shared-storage volumes; it is not root and does not expose other applications' private directories.
 - Same-size groups are candidates only. The milestone does not hash file contents, confirm duplicates, delete files or move files.
 - The user confirmed the merged milestone on the OPPO A60 5G; these boundaries remain product limitations rather than hidden capabilities.
+
+
+## 2026-08-09 — Unified capability v1 limitations
+
+- App intelligence requires the user to enable Usage Access in Android settings. It uses a seven-day aggregate and visible launcher applications; it is not exact per-app energy, CPU attribution or a complete package inventory.
+- Per-app StorageStats may be unavailable or OEM-dependent. The UI keeps that state explicit instead of fabricating a size.
+- Exact duplicate detection hashes only after an explicit user action, compares SHA-256 content among same-size candidates and is capped at 20,000 entries / 256 MiB. It does not inspect private app directories, delete files or move files.
+- History trends require at least five previous successful local snapshots and compare endpoints plus thermal context. They are not continuous monitoring and do not establish causality.
+- These new capabilities are CI-verified but not yet physically verified on the target phone; the final merge gate remains open.
