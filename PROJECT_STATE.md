@@ -2,7 +2,7 @@
 
 **Updated:** 2026-08-09  
 **Phase:** 2 — capability and permission center  
-**Production code:** real device/battery snapshot collectors, diagnosis-engine v1 and CPU activity probe v1 on `main`; the target has no numeric device-level CPU activity source
+**Production code:** real device/battery snapshot collectors, diagnosis-engine v1, CPU activity probe v1, snapshot lifecycle v1, the accepted premium overview baseline, Room local history and bounded read-only storage intelligence on `main`; the target has no numeric device-level CPU activity and no usable battery voltage source
 
 ## Completed
 
@@ -23,7 +23,7 @@
 - Factual battery snapshot implemented in PR #7. It uses the standard Android battery broadcast plus optional `BatteryManager` properties, with explicit unavailable states and no health/optimisation claims. The target's invalid voltage was rejected correctly in the second physical inspection; the truthful battery snapshot milestone is now physically verified, with voltage unavailable on this device.
 - PR #7 was merged as `76eb50e29dee6cb72310c47416961d9b601d9bad`; `main` now contains the physically verified battery milestone.
 
-## Current milestone — Diagnosis engine v1 implementation checkpoint
+## Completed milestone — Diagnosis engine v1 implementation checkpoint
 
 - Implemented a small deterministic, current-snapshot diagnosis engine with versioned rule IDs, finding type, severity, evidence and explicit limitations.
 - The first slice evaluates only Android's official low-memory flag, current thermal status and battery-voltage data quality.
@@ -50,7 +50,7 @@
 - Static APK inspection, installation, launch and CPU-card inspection are complete for this slice; a numeric CPU activity value is not available on this target.
 - PR #9 was physically verified and merged as `679aec0a530d6c8c38742a827d273cd35d359596`; direct repository inspection confirmed that `main` contains the CPU probe milestone.
 
-## Current milestone — Snapshot lifecycle v1 verification checkpoint
+## Completed milestone — Snapshot lifecycle v1 merged checkpoint
 
 - Added a user-triggered refresh action for the device snapshot; collection remains off the Compose/UI thread.
 - Only one refresh can run at a time, and completed refreshes are throttled to at most one per second.
@@ -59,7 +59,7 @@
 - Added unit coverage for refresh gating, state transitions and capture-time presentation.
 - GitHub Actions run `31320108150` passed lint, unit tests, Android 16 build, stable-certificate verification and artifact upload.
 - Artifact `9039921975` has digest `sha256:d2d5e96e06f51690e9025c53cb3adf6233a9887bf0024d0953eb38706b5f3fa9`.
-- Physical target-device inspection of the refresh action, timestamp and failure behavior is still pending. This checkpoint is not yet physically verified or merged.
+- The user confirmed physical inspection of refresh, timestamp, rapid-tap protection and later-failure preservation on the target. PR #10 was marked ready and merged.
 
 ## Physical Phase 2 observations
 
@@ -87,7 +87,7 @@ The CPU probe milestone is deliberately a collector/capability slice, not a CPU 
 
 Snapshot lifecycle v1 is the next bounded slice on draft PR #10. It improves the trustworthiness of the existing point-in-time overview without adding history, permissions, background monitoring or new diagnosis claims. The branch is CI-verified; physical inspection remains the merge gate.
 
-## Product design direction — recorded, implementation pending
+## Product design direction — first baseline accepted; further polish deferred
 
 - The user explicitly raised design quality to a first-class product requirement after reviewing the current overview screenshots.
 - The target is a distinctive, premium and emotionally compelling experience that aims above typical Google Play utility apps; “professional” is only the minimum bar.
@@ -96,7 +96,7 @@ Snapshot lifecycle v1 is the next bounded slice on draft PR #10. It improves the
 - No fake health/optimization score, fabricated CPU value, unsupported diagnosis or hidden limitation may be introduced for visual effect.
 - Implementation, CI and physical visual inspection on the OPPO target are required before the design can be called complete.
 
-## Current milestone — Premium overview design/UX v1 verification checkpoint
+## Completed milestone — Premium overview design/UX v1 checkpoint
 
 - Replaced the prototype overview with a deliberate dark visual system, a first-viewport status hero and compact scan-first metric surfaces.
 - Added semantic visual treatment for normal, informational, warning, critical and unavailable states without introducing a health score or unsupported certainty.
@@ -107,7 +107,7 @@ Snapshot lifecycle v1 is the next bounded slice on draft PR #10. It improves the
 - GitHub Actions run 31321637219 passed lint, unit tests, Android 16 build, stable certificate verification and artifact upload.
 - Artifact 9040353819 has ZIP digest sha256:18ad6ea8c6eb2287bb15221d28376b9864619b3a354f92d9fdfd30d7a9b38636.
 - Complete candidate APK is 27,259,870 bytes with SHA-256 f795026281bdf57a1c1cddb9a943930a8c3e3c50a125376da5f03c5888fb7024.
-- ZIP/APK integrity checks passed. Physical visual inspection on the OPPO A60 5G remains pending; this design checkpoint is not yet VERIFIED or merged.
+- ZIP/APK integrity checks passed. Physical visual inspection and user acceptance passed; PR #11 was merged as the accepted first design baseline.
 
 ## Verification language
 
@@ -118,7 +118,7 @@ Snapshot lifecycle v1 is the next bounded slice on draft PR #10. It improves the
 - Battery snapshot implementation and truthful unavailable-voltage handling are PHYSICALLY VERIFIED. A usable voltage measurement is NOT AVAILABLE on this target; the rejected vendor value is not presented as a measurement.
 - The diagnosis-engine v1 implementation, CI and target-device behavior are PHYSICALLY VERIFIED and are now present on `main` after PR #8 merge.
 - CPU activity probe v1 is CI-VERIFIED and PHYSICALLY VERIFIED for truthful unavailable-state behavior on the target. The target does not expose a usable `/proc/stat` sample, so numeric CPU activity is NOT AVAILABLE.
-- Snapshot lifecycle v1 is CI-VERIFIED on draft PR #10, but its refresh, timestamp and error states are NOT VERIFIED on the target device yet.
+- Snapshot lifecycle v1 is CI-VERIFIED and physically verified by user confirmation; PR #10 is merged.
 - No optimization action exists, and the diagnosis engine executes no action automatically.
 - Stable debug signing, clean installation and subsequent in-place update are PHYSICALLY VERIFIED.
 
@@ -146,3 +146,14 @@ Snapshot lifecycle v1 is the next bounded slice on draft PR #10. It improves the
 - The user reviewed the result and accepted it as a good first version, choosing to defer further design refinement to a later phase so functional development can continue.
 - Premium overview design/UX v1 is now **PHYSICALLY VERIFIED and ACCEPTED AS A BASELINE**, not declared final. Future polish remains recorded design debt.
 - The design PR remains stacked on snapshot lifecycle PR #10. The next unfinished gate is PR #10 physical verification of repeated-tap protection and failure-state preservation; the design milestone must not be described as the final product design.
+
+## 2026-08-09 — Canonical trunk and Device Intelligence v1 merged checkpoint
+
+- The live repository was reconciled before documentation updates. The old journal PR10 head was stale; live GitHub was treated as authoritative.
+- PR #10 snapshot lifecycle v1 merged as `4b914cf0e41cbf15999a9c380dcad10dcbb6eac3`.
+- PR #11 premium overview v1 merged as `b1710e2ad30a27eac9e4b60590acc11159298921`; the premium design remains an accepted first baseline, not final polish.
+- PR #12 device intelligence v1 merged as `815a8fb136ea0d666b83e169743f3768d85d062a` after live CI/artifact reconciliation and user-confirmed physical acceptance.
+- PR12 evidence: run `31325270001`, artifact `9041367725`, 37 tests passed, 0 failures, 0 lint errors and 12 warnings; ZIP SHA-256 `70aabe68101f77c72600b79f71f3b55dc22e78b8c34a7df385886e4e1143d3e3`; APK SHA-256 `82fa66e5c3bbc168863e8f48702708b6bb55b3bedccf8289c71866c34629d585`.
+- The merged line now includes local Room history capped at 120 successful snapshots, explicit SAF folder selection with read-only metadata scan, optional explicitly triggered shared-storage metadata scan, and truthful same-size candidate wording. No content hashing, deletion, movement, background scan or automatic permission request was introduced.
+- The target limitations remain: numeric device-level CPU activity and usable battery voltage are unavailable.
+- Recommended next bounded milestone: read-only personal-baseline v1 from the existing local history, with minimum-sample/insufficient-data handling, explicit evidence and no score, causal certainty or automatic action.
