@@ -1,0 +1,88 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "991c4ee1c525aa0efa4982013fc74d98",
+    "entities": [
+      {
+        "tableName": "snapshot_history",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `capturedAtMillis` INTEGER NOT NULL, `availableMemoryBytes` INTEGER NOT NULL, `isLowMemory` INTEGER NOT NULL, `thermalStatus` INTEGER NOT NULL, `thermalHeadroom` REAL, `availableStorageBytes` INTEGER NOT NULL, `batteryLevelPercent` INTEGER, `batteryTemperatureCelsius` REAL, `cpuActivityPercent` REAL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "capturedAtMillis",
+            "columnName": "capturedAtMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "availableMemoryBytes",
+            "columnName": "availableMemoryBytes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isLowMemory",
+            "columnName": "isLowMemory",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "thermalStatus",
+            "columnName": "thermalStatus",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "thermalHeadroom",
+            "columnName": "thermalHeadroom",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "availableStorageBytes",
+            "columnName": "availableStorageBytes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "batteryLevelPercent",
+            "columnName": "batteryLevelPercent",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "batteryTemperatureCelsius",
+            "columnName": "batteryTemperatureCelsius",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "cpuActivityPercent",
+            "columnName": "cpuActivityPercent",
+            "affinity": "REAL",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '991c4ee1c525aa0efa4982013fc74d98')"
+    ]
+  }
+}
