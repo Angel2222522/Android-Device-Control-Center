@@ -2,10 +2,13 @@ package dev.devicecontrolcenter
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -90,13 +93,34 @@ private val CriticalAccent = Color(0xFFFF929F)
 private val UnavailableAccent = Color(0xFFAEB8C9)
 
 class MainActivity : ComponentActivity() {
+    private val allFilesAccessState = mutableStateOf(false)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        allFilesAccessState.value = Environment.isExternalStorageManager()
         setContent {
             PremiumTheme {
-                CapabilityRoute(context = this@MainActivity)
+                CapabilityRoute(
+                    context = this@MainActivity,
+                    hasAllFilesAccess = allFilesAccessState.value,
+                    onEnableAllFilesAccess = ::openAllFilesAccessSettings,
+                )
             }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        allFilesAccessState.value = Environment.isExternalStorageManager()
+    }
+
+    private fun openAllFilesAccessSettings() {
+        val appSettingsIntent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
+            data = Uri.parse("package:$packageName")
+        }
+        runCatching { startActivity(appSettingsIntent) }.onFailure {
+            runCatching { startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)) }
         }
     }
 }
@@ -110,7 +134,11 @@ private fun PremiumTheme(content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun CapabilityRoute(context: Context) {
+private fun CapabilityRoute(
+    context: Context,
+    hasAllFilesAccess: Boolean,
+    onEnableAllFilesAccess: () -> Unit,
+) {
     val state = remember { mutableStateOf(SnapshotUiState<DeviceSnapshot>()) }
     val historyState = remember { mutableStateOf(HistoryUiState()) }
     val storageState = remember {
@@ -179,6 +207,7 @@ private fun CapabilityRoute(context: Context) {
 
         storageState.value = storageState.value.copy(
             selectedTreeUri = uri,
+            source = StorageScanSource.SELECTED_FOLDER,
             isScanning = true,
             errorMessage = null,
         )
@@ -190,7 +219,52 @@ private fun CapabilityRoute(context: Context) {
                     if (!active.get()) return@post
                     storageState.value = result.fold(
                         onSuccess = { scan ->
-                            StorageScanState(selectedTreeUri = uri, result = scan)
+                            StorageScanState(
+                                selectedTreeUri = uri,
+                                result = scan,
+                                source = StorageScanSource.SELECTED_FOLDER,
+                            )
+                        },
+                        onFailure = { error ->
+                            storageState.value.copy(
+                                isScanning = false,
+                                errorMessage = error.message ?: "Η read-only σάρωση απέτυχε.",
+                            )
+                        },
+                    )
+                }
+            }
+        }.onFailure {
+            storageScanInFlight.set(false)
+            storageState.value = storageState.value.copy(
+                isScanning = false,
+                errorMessage = "Η read-only σάρωση απέτυχε.",
+            )
+        }
+    }
+
+    fun scanAllStorage() {
+        if (!storageScanInFlight.compareAndSet(false, true)) return
+
+        val selectedTreeUri = storageState.value.selectedTreeUri
+        storageState.value = storageState.value.copy(
+            source = StorageScanSource.SHARED_STORAGE,
+            isScanning = true,
+            errorMessage = null,
+        )
+        runCatching {
+            executor.execute {
+                val result = runCatching { SharedStorageScanner.scan(context) }
+                mainHandler.post {
+                    storageScanInFlight.set(false)
+                    if (!active.get()) return@post
+                    storageState.value = result.fold(
+                        onSuccess = { scan ->
+                            StorageScanState(
+                                selectedTreeUri = selectedTreeUri,
+                                result = scan,
+                                source = StorageScanSource.SHARED_STORAGE,
+                            )
                         },
                         onFailure = { error ->
                             storageState.value.copy(
@@ -271,9 +345,16 @@ private fun CapabilityRoute(context: Context) {
             onRefresh = ::refresh,
             historyState = historyState.value,
             storageState = storageState.value,
+            hasAllFilesAccess = hasAllFilesAccess,
             onChooseStorageFolder = { folderPicker.launch(null) },
+            onEnableAllFilesAccess = onEnableAllFilesAccess,
+            onScanAllStorage = ::scanAllStorage,
             onRescanStorage = {
-                storageState.value.selectedTreeUri?.let(::scanStorage)
+                when (storageState.value.source) {
+                    StorageScanSource.SHARED_STORAGE -> scanAllStorage()
+                    StorageScanSource.SELECTED_FOLDER, null ->
+                        storageState.value.selectedTreeUri?.let(::scanStorage)
+                }
             },
         )
 
@@ -362,7 +443,10 @@ private fun CapabilityScreen(
     onRefresh: () -> Unit,
     historyState: HistoryUiState,
     storageState: StorageScanState,
+    hasAllFilesAccess: Boolean,
     onChooseStorageFolder: () -> Unit,
+    onEnableAllFilesAccess: () -> Unit,
+    onScanAllStorage: () -> Unit,
     onRescanStorage: () -> Unit,
 ) {
     val diagnosis = remember(snapshot) { DeviceDiagnosisEngine.analyze(snapshot) }
@@ -446,7 +530,10 @@ private fun CapabilityScreen(
             item {
                 StorageIntelligenceCard(
                     state = storageState,
+                    hasAllFilesAccess = hasAllFilesAccess,
                     onChooseFolder = onChooseStorageFolder,
+                    onEnableAllFilesAccess = onEnableAllFilesAccess,
+                    onScanAllStorage = onScanAllStorage,
                     onRescan = onRescanStorage,
                 )
             }
@@ -460,7 +547,7 @@ private fun CapabilityScreen(
                 MemoryDetailsCard(snapshot = snapshot)
             }
             item {
-                AccessCard(snapshot = snapshot)
+                AccessCard(snapshot = snapshot, hasAllFilesAccess = hasAllFilesAccess)
             }
             item {
                 Text(
@@ -756,12 +843,17 @@ private fun MetricTile(
 @Composable
 private fun StorageIntelligenceCard(
     state: StorageScanState,
+    hasAllFilesAccess: Boolean,
     onChooseFolder: () -> Unit,
+    onEnableAllFilesAccess: () -> Unit,
+    onScanAllStorage: () -> Unit,
     onRescan: () -> Unit,
 ) {
     var expanded by remember(state.result) { mutableStateOf(false) }
     val result = state.result
     val badgeTone = when {
+        state.isScanning -> OverviewTone.INFO
+        state.source == StorageScanSource.SHARED_STORAGE -> OverviewTone.NEUTRAL
         result != null -> OverviewTone.INFO
         state.selectedTreeUri != null -> OverviewTone.NEUTRAL
         else -> OverviewTone.UNAVAILABLE
@@ -787,16 +879,18 @@ private fun StorageIntelligenceCard(
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     Text(text = "Έξυπνη εικόνα αποθήκευσης", style = MaterialTheme.typography.titleMedium)
                     Text(
-                        text = "Μόνο σε φάκελο που επιλέγεις εσύ",
+                        text = "Πλήρης συλλογή με ρητή άδεια ή μόνο σε φάκελο που επιλέγεις εσύ",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
                 StatusBadge(
                     text = when {
+                        state.isScanning -> "Ανάλυση…"
+                        state.source == StorageScanSource.SHARED_STORAGE -> "Πλήρης πρόσβαση"
                         result != null -> "Read-only"
                         state.selectedTreeUri != null -> "Έχει επιλεγεί"
-                        else -> "Απαιτεί επιλογή"
+                        else -> "Περιορισμένη"
                     },
                     tone = badgeTone,
                 )
@@ -804,7 +898,11 @@ private fun StorageIntelligenceCard(
 
             if (result == null) {
                 Text(
-                    text = "Δεν υπάρχει ακόμη ανάλυση αρχείων. Η εφαρμογή δεν βλέπει κοινόχρηστα αρχεία χωρίς ρητή επιλογή φακέλου.",
+                    text = if (hasAllFilesAccess) {
+                        "Η πλήρης πρόσβαση είναι ενεργή. Η σάρωση θα εξετάσει μόνο μεταδεδομένα στον κοινόχρηστο χώρο."
+                    } else {
+                        "Δεν υπάρχει ακόμη ανάλυση αρχείων. Χωρίς πλήρη πρόσβαση, η εφαρμογή βλέπει μόνο φάκελο που επιλέγεις ρητά."
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -816,6 +914,15 @@ private fun StorageIntelligenceCard(
                 )
                 Text(
                     text = StorageIntelligencePresentation.summary(result),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = "Πηγή: " + if (state.source == StorageScanSource.SHARED_STORAGE) {
+                        "κοινόχρηστοι χώροι"
+                    } else {
+                        "επιλεγμένος φάκελος"
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -898,7 +1005,7 @@ private fun StorageIntelligenceCard(
             }
 
             Button(
-                onClick = onChooseFolder,
+                onClick = if (hasAllFilesAccess) onScanAllStorage else onEnableAllFilesAccess,
                 enabled = !state.isScanning,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -907,15 +1014,32 @@ private fun StorageIntelligenceCard(
                     contentColor = MaterialTheme.colorScheme.onPrimary,
                 ),
             ) {
-                Text(text = if (state.isScanning) "Ανάλυση…" else "Επίλεξε φάκελο")
+                Text(
+                    text = when {
+                        state.isScanning -> "Ανάλυση…"
+                        hasAllFilesAccess -> "Σάρωση κοινόχρηστων χώρων"
+                        else -> "Ενεργοποίηση πλήρους πρόσβασης"
+                    },
+                )
             }
-            if (state.selectedTreeUri != null && !state.isScanning) {
+            TextButton(
+                onClick = onChooseFolder,
+                enabled = !state.isScanning,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(text = "Ή επίλεξε μόνο έναν φάκελο")
+            }
+            if (state.result != null && !state.isScanning) {
                 TextButton(onClick = onRescan, modifier = Modifier.fillMaxWidth()) {
                     Text(text = "Σάρωση ξανά")
                 }
             }
             Text(
-                text = "Δεν εκτελείται διαγραφή, μετακίνηση ή άλλη αυτόματη ενέργεια.",
+                text = if (hasAllFilesAccess) {
+                    "Η πλήρης πρόσβαση ενεργοποιείται μόνο από τις ρυθμίσεις Android. Η εφαρμογή διαβάζει μόνο μεταδεδομένα και δεν διαγράφει ή μετακινεί αρχεία."
+                } else {
+                    "Η πλήρης πρόσβαση δεν ζητείται αυτόματα. Η επιλογή φακέλου παραμένει διαθέσιμη χωρίς ευρεία άδεια."
+                },
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -1204,7 +1328,7 @@ private fun MemoryDetailsCard(snapshot: DeviceSnapshot) {
 }
 
 @Composable
-private fun AccessCard(snapshot: DeviceSnapshot) {
+private fun AccessCard(snapshot: DeviceSnapshot, hasAllFilesAccess: Boolean) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -1214,7 +1338,7 @@ private fun AccessCard(snapshot: DeviceSnapshot) {
         Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(text = "Ειδικές προσβάσεις", style = MaterialTheme.typography.titleMedium)
             AccessRow("Στατιστικά χρήσης", snapshot.hasUsageAccess)
-            AccessRow("Πρόσβαση όλων των αρχείων", snapshot.hasAllFilesAccess)
+            AccessRow("Πρόσβαση όλων των αρχείων", hasAllFilesAccess)
             Text(
                 text = "Η εφαρμογή δεν ζητά πρόσβαση αυτόματα.",
                 style = MaterialTheme.typography.labelMedium,

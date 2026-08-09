@@ -22,7 +22,31 @@ class StorageIntelligenceTest {
             fileNames = listOf("a.bin", "b.bin"),
         )
 
-        assertEquals("2 αρχεία · 0.00 GiB το καθένα", StorageIntelligencePresentation.sameSizeLabel(group))
+        assertEquals("2 αρχεία · 2.0 KiB το καθένα", StorageIntelligencePresentation.sameSizeLabel(group))
+    }
+
+    @Test
+    fun fileSizesUseAUnitThatDoesNotRoundSmallFilesToZeroGiB() {
+        assertEquals("2.0 KiB", StorageIntelligencePresentation.storageSize(2_048L))
+        assertEquals(
+            "Μέγεθος μη διαθέσιμο",
+            StorageIntelligencePresentation.fileSize(
+                StorageFileEntry("unknown.bin", null, 0L),
+            ),
+        )
+    }
+
+    @Test
+    fun knownSizeDoesNotClaimZeroWhenAllProviderSizesAreUnknown() {
+        val result = sampleResult(wasTruncated = false).copy(
+            knownBytes = 0L,
+            unknownSizeFileCount = 3,
+        )
+
+        assertEquals(
+            "Γνωστό μέγεθος: μη διαθέσιμο · 3 χωρίς διαθέσιμο μέγεθος",
+            StorageIntelligencePresentation.knownSize(result),
+        )
     }
 
     @Test
