@@ -47,6 +47,9 @@ interface SnapshotHistoryDao {
             ")",
     )
     fun trimTo(keep: Int)
+
+    @Query("DELETE FROM snapshot_history")
+    fun clear()
 }
 
 @Database(
@@ -82,6 +85,10 @@ class SnapshotHistoryRepository(context: Context) {
     }
 
     fun recent(): List<SnapshotHistoryEntity> = dao.recent(SNAPSHOT_HISTORY_LIMIT)
+
+    fun clear() {
+        dao.clear()
+    }
 }
 
 fun DeviceSnapshot.toHistoryEntity(capturedAtMillis: Long): SnapshotHistoryEntity = SnapshotHistoryEntity(
