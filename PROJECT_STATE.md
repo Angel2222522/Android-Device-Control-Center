@@ -50,6 +50,17 @@
 - Static APK inspection, installation, launch and CPU-card inspection are complete for this slice; a numeric CPU activity value is not available on this target.
 - PR #9 was physically verified and merged as `679aec0a530d6c8c38742a827d273cd35d359596`; direct repository inspection confirmed that `main` contains the CPU probe milestone.
 
+## Current milestone — Snapshot lifecycle v1 verification checkpoint
+
+- Added a user-triggered refresh action for the device snapshot; collection remains off the Compose/UI thread.
+- Only one refresh can run at a time, and completed refreshes are throttled to at most one per second.
+- The UI records and displays the last successful capture time.
+- A failed refresh preserves the last successful snapshot; an initial failure shows an explicit retryable error state.
+- Added unit coverage for refresh gating, state transitions and capture-time presentation.
+- GitHub Actions run `31320108150` passed lint, unit tests, Android 16 build, stable-certificate verification and artifact upload.
+- Artifact `9039921975` has digest `sha256:d2d5e96e06f51690e9025c53cb3adf6233a9887bf0024d0953eb38706b5f3fa9`.
+- Physical target-device inspection of the refresh action, timestamp and failure behavior is still pending. This checkpoint is not yet physically verified or merged.
+
 ## Physical Phase 2 observations
 
 - RAM: 3.53 GB total, 1.13 GB available, 0.42 GB low-memory threshold; Android did not report low memory.
@@ -74,6 +85,8 @@ The diagnosis-engine v1 implementation has passed CI and physical inspection on 
 
 The CPU probe milestone is deliberately a collector/capability slice, not a CPU diagnosis claim. It is merged because the target behavior is truthful and physically verified. The next bounded slice must be selected from the merged `main` state; numeric CPU activity must remain unavailable on this target.
 
+Snapshot lifecycle v1 is the next bounded slice on draft PR #10. It improves the trustworthiness of the existing point-in-time overview without adding history, permissions, background monitoring or new diagnosis claims. The branch is CI-verified; physical inspection remains the merge gate.
+
 ## Verification language
 
 - Matrix `VERIFIED` = feasibility supported by current documentation/reference evidence.
@@ -83,5 +96,6 @@ The CPU probe milestone is deliberately a collector/capability slice, not a CPU 
 - Battery snapshot implementation and truthful unavailable-voltage handling are PHYSICALLY VERIFIED. A usable voltage measurement is NOT AVAILABLE on this target; the rejected vendor value is not presented as a measurement.
 - The diagnosis-engine v1 implementation, CI and target-device behavior are PHYSICALLY VERIFIED and are now present on `main` after PR #8 merge.
 - CPU activity probe v1 is CI-VERIFIED and PHYSICALLY VERIFIED for truthful unavailable-state behavior on the target. The target does not expose a usable `/proc/stat` sample, so numeric CPU activity is NOT AVAILABLE.
+- Snapshot lifecycle v1 is CI-VERIFIED on draft PR #10, but its refresh, timestamp and error states are NOT VERIFIED on the target device yet.
 - No optimization action exists, and the diagnosis engine executes no action automatically.
 - Stable debug signing, clean installation and subsequent in-place update are PHYSICALLY VERIFIED.

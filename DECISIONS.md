@@ -104,6 +104,13 @@
 - **Rejected:** Fabricating a device-wide percentage from the current app's `Debug.threadCpuTimeNanos()`, presenting Android Studio/Perfetto profiling as a runtime public API, or treating `/proc/stat` as a universal Android contract.
 - **Why:** Android's public `Debug` CPU-time API measures the current thread, while system-wide CPU inspection is exposed through profiling/tracing tools rather than a stable ordinary-app runtime API. Procfs can provide useful evidence on some devices, but its accessibility and semantics remain kernel/OEM dependent.
 
+## D-019 — User-triggered snapshot lifecycle before historical intelligence
+
+- **Decision:** The overview uses an explicit user-triggered refresh, one collection at a time, with a minimum one-second completion interval. It displays the last successful capture time, preserves the last valid snapshot after a later failure and exposes a retryable initial error state.
+- **Boundary:** This is still point-in-time telemetry. It does not persist snapshots, create a history/baseline, monitor in the background or add a diagnosis/action claim.
+- **Why:** `ActivityManager.MemoryInfo`, battery broadcasts/properties and thermal APIs are snapshot-oriented inputs. The Android `PowerManager.getThermalHeadroom()` documentation states that calling it more frequently than about once per second has no benefit and may return `NaN`; a user-triggered, throttled refresh keeps the product truthful and low-overhead.
+- **Source:** https://developer.android.com/reference/android/os/PowerManager#getThermalHeadroom(int)
+
 ## Open product decisions
 
 - SAF/MediaStore-first versus broad All Files Access posture.

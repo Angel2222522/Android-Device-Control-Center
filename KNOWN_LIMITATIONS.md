@@ -23,6 +23,7 @@
 - Local VPN firewall occupies Android's single VPN slot and can add battery/latency overhead.
 - Domain attribution is incomplete under encrypted DNS, QUIC, CDNs and shared endpoints.
 - Background execution restrictions prevent silent continuous high-frequency sampling.
+- The overview remains point-in-time telemetry: refresh is user-triggered and snapshots are not persisted as history yet. If a later refresh fails, the app keeps the last successful snapshot; an initial failure requires a retry.
 - CI emulator success cannot prove behavior on the user's physical Android 16/OEM build.
 - Zero-cost GitHub Actions is unlimited on standard runners for public repositories; private repositories have quotas.
 - APKs signed by different certificates cannot update the same Android application ID. CI debug builds therefore require a stable development-only identity; production uses a separate protected key.

@@ -197,3 +197,15 @@
 - Merge commit: `679aec0a530d6c8c38742a827d273cd35d359596`.
 - Direct repository inspection confirmed that `main` contains the CPU probe milestone.
 - CPU probe v1 is now **CI-VERIFIED, PHYSICALLY VERIFIED AND MERGED** for truthful unavailable-state behavior. Numeric CPU activity remains unavailable on the target device.
+
+## 2026-08-09 — Snapshot lifecycle v1 implementation checkpoint
+
+- Existing Android snapshot APIs were retained; no new permission, privileged API or background service was introduced.
+- Added user-triggered refresh, single-flight protection, one-second completion throttle, last-successful capture time and retryable initial error state.
+- A failed later refresh preserves the last successful snapshot and displays the failure message without replacing valid measurements.
+- Added unit tests for concurrent-refresh rejection, one-second throttling, state recovery and timestamp presentation.
+- Local Gradle execution: **NOT RUN** because Gradle is unavailable in the inspection workspace; whitespace/diff checks passed.
+- Draft PR #10 head `1daca7e7ca92778100c38ef37899d0c74feeb24f`.
+- GitHub Actions run `31320108150`: lint, unit tests, Android 16 build, stable certificate verification and artifact upload **PASSED**.
+- Artifact `9039921975`; artifact digest: `sha256:d2d5e96e06f51690e9025c53cb3adf6233a9887bf0024d0953eb38706b5f3fa9`.
+- Refresh/timestamp/error-state inspection on the OPPO target: **NOT VERIFIED / PENDING**.

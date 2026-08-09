@@ -62,6 +62,19 @@
 - [x] Physically verify the target's explicit `/proc/stat` unavailable state; do not fabricate a numeric CPU percentage.
 - [x] Mark PR #9 ready and merge the verified CPU activity probe checkpoint.
 
+## Phase 2 — Snapshot lifecycle v1 (current checkpoint)
+
+- [x] Define a user-triggered refresh boundary without background monitoring.
+- [x] Keep collection off the Compose/UI thread and reject concurrent refreshes.
+- [x] Throttle completed refreshes to at most once per second for thermal/API safety.
+- [x] Display the last successful capture time.
+- [x] Preserve the last valid snapshot and show a retryable error state after collection failure.
+- [x] Add unit coverage for refresh gating, state transitions and timestamp presentation.
+- [x] Pass GitHub Actions lint, unit tests, Android 16 build, signing verification and artifact upload.
+- [ ] Install the milestone APK over the current stable-signed app and inspect the refresh control.
+- [ ] Physically verify refresh, timestamp, repeated-tap protection and failure-state behavior on the target phone.
+- [ ] Merge the physically verified snapshot lifecycle checkpoint.
+
 ## Phase 2 — Battery factual snapshot
 
 - [x] Verify official Android 16 battery API semantics and units.
