@@ -8,6 +8,9 @@ import android.os.Environment
 import android.os.PowerManager
 import android.os.Process
 import android.os.StatFs
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 data class DeviceSnapshot(
@@ -62,9 +65,17 @@ object DeviceSnapshotReader {
 }
 
 object SnapshotPresentation {
+    private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss", Locale.ROOT)
+
     fun gib(bytes: Long): String = String.format(Locale.ROOT, "%.2f GiB", bytes / 1_073_741_824.0)
 
     fun decimalGb(bytes: Long): String = String.format(Locale.ROOT, "%.2f GB", bytes / 1_000_000_000.0)
+
+    fun capturedAtLabel(capturedAtMillis: Long?, zoneId: ZoneId = ZoneId.systemDefault()): String =
+        capturedAtMillis?.let {
+            val time = Instant.ofEpochMilli(it).atZone(zoneId).format(timeFormatter)
+            "Τελευταία ενημέρωση: $time"
+        } ?: "Δεν υπάρχει έγκυρο στιγμιότυπο"
 
     fun thermalLabel(status: Int): String = when (status) {
         PowerManager.THERMAL_STATUS_NONE -> "Χωρίς θερμικό περιορισμό"
