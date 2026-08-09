@@ -65,6 +65,12 @@
 - **Why:** The official API name “headroom” is counterintuitive because larger returned values mean less safety, not more.
 - **Rejected:** Exposing the raw 1.02 value as unexplained “thermal headroom”.
 
+## D-013 — Separate marketed, kernel-accessible and storage-backed memory
+
+- **Decision:** Display advertised physical RAM and kernel-accessible RAM separately. Do not add OEM storage-backed “RAM expansion” to physical RAM.
+- **Why:** OPPO reports 4 GB physical + 4 GB storage-backed expansion as an 8 GB combined pool, while Android reports 3.53 GiB accessible to the kernel. These values answer different questions.
+- **Storage rule:** A `StatFs` reading of the data filesystem is labelled as app-data capacity, not the device's marketed 128 GB capacity.
+
 ## Open product decisions
 
 - SAF/MediaStore-first versus broad All Files Access posture.
