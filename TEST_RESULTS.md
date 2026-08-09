@@ -50,3 +50,14 @@ Future entries must include date, commit SHA, environment/device, exact command 
 - Application code/telemetry was not launched, so Phase 2 remains physically unverified.
 - Corrective action: repository-pinned development-only debug keystore; production signing remains separate.
 - Required verification: CI signature inspection, clean install after removing the old APK, then installation of a subsequent debug build without uninstalling.
+
+## 2026-08-09 — Stable debug-signing correction
+
+- Pull request: `#3`.
+- First independent CI run: `31312849110` — build/lint/tests and stable-keystore restoration **PASSED**.
+- Second independent CI run: `31312958333` — build/lint/tests **PASSED**.
+- Explicit `apksigner verify --print-certs`: **PASSED**.
+- Verified certificate SHA-256: `f805690fd2b6a9e925d6da491fbbb2839df7df581db580f58eb7f26742804c7a`.
+- Squash merge commit: `e1d78cea001f0da8769ccf2db70eb6296407ec20`.
+- Clean installation on target phone: **UNVERIFIED**.
+- Subsequent in-place update on target phone: **UNVERIFIED**.
