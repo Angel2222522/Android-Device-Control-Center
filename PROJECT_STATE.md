@@ -42,7 +42,10 @@
 - Collection runs off the Compose/UI thread. If procfs is unavailable, malformed or restricted by the OEM/kernel, the snapshot remains explicitly unavailable.
 - The displayed value is derived whole-device counter activity, not CPU speed, frequency, temperature, app attribution or a diagnosis finding.
 - Added parser, counter-delta, invalid-input and unavailable-state unit coverage.
-- GitHub Actions, APK inspection and target-phone physical verification are pending for this slice.
+- GitHub Actions run `31318259964` passed lint, unit tests, Android 16 build, stable-certificate verification and artifact upload.
+- The valid artifact is `9039406371`; its ZIP digest is `sha256:6acdf78a05671925c625ffccda8a70234780f06363c7c1d866288100288c453`, and the complete APK payload is 27,096,030 bytes with SHA-256 `bfa9492e31f0f37945f20def40c23e240609c768abbf6c862569b06686bb2512`.
+- A first local handoff extraction was truncated and therefore unusable; the original artifact ZIP passed integrity testing and was re-extracted completely. This delivery failure is not physical app verification.
+- Static APK inspection is now complete; target-phone installation, launch and CPU-card inspection remain pending.
 
 ## Physical Phase 2 observations
 
@@ -76,6 +79,6 @@ The next bounded milestone is CPU activity probe v1. It is deliberately a collec
 - Phase 2 telemetry collection/rendering is PHYSICALLY VERIFIED; corrected thermal presentation is PHYSICALLY VERIFIED.
 - Battery snapshot implementation and truthful unavailable-voltage handling are PHYSICALLY VERIFIED. A usable voltage measurement is NOT AVAILABLE on this target; the rejected vendor value is not presented as a measurement.
 - The diagnosis-engine v1 implementation, CI and target-device behavior are PHYSICALLY VERIFIED and are now present on `main` after PR #8 merge.
-- CPU activity probe v1 exists on the checkpoint branch but is NOT VERIFIED until CI, APK inspection and target-device inspection pass.
+- CPU activity probe v1 exists on the checkpoint branch; CI and static APK integrity are VERIFIED, while target-device installation, launch and CPU-card inspection remain NOT VERIFIED.
 - No optimization action exists, and the diagnosis engine executes no action automatically.
 - Stable debug signing, clean installation and subsequent in-place update are PHYSICALLY VERIFIED.

@@ -171,4 +171,12 @@
 - Implemented a read-only `/proc/stat` aggregate-counter probe with two samples over a 250 ms window, collected off the UI thread.
 - Added explicit unavailable behavior for inaccessible/malformed procfs and tests for parsing, counter deltas, invalid input and unavailable state.
 - The result is intentionally presented as short-window whole-device activity, not speed, frequency, temperature, app attribution or a diagnosis.
-- CPU activity probe v1 code, CI, APK inspection and target-phone physical verification: **NOT VERIFIED / PENDING**.
+
+## 2026-08-09 — CPU activity probe v1 CI and artifact integrity
+
+- GitHub Actions run `31318259964`: lint, unit tests, Android 16 build, stable-certificate verification and artifact upload **PASSED**.
+- Artifact `9039406371`; artifact ZIP digest: `sha256:6acdf78a05671925c625ffccda8a70234780f06363c7c1d866288100288c453`.
+- Complete APK payload: 27,096,030 bytes; SHA-256: `bfa9492e31f0f37945f20def40c23e240609c768abbf6c862569b06686bb2512`.
+- The first local extraction delivered for phone inspection was truncated to 16,711,680 bytes and was unusable. The source artifact ZIP itself passed `unzip -t`; a fresh complete extraction passed APK ZIP integrity testing.
+- Static APK inspection found the expected `MainActivity`, `CapabilityRoute`, `CpuSnapshotReader`, diagnosis and CPU presentation classes. The truncated file must not be installed or used as evidence.
+- CPU activity probe v1 code, CI and artifact integrity: **VERIFIED**. Target-phone installation, launch and CPU-card inspection: **NOT VERIFIED / PENDING**.

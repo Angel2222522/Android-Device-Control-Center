@@ -56,7 +56,8 @@
 - [x] Define the read-only `/proc/stat` probe, 250 ms counter window and explicit unavailable state.
 - [x] Implement background collection and truthful CPU activity presentation without a diagnosis claim.
 - [x] Add parser, counter-delta, invalid-input and unavailable-state unit tests.
-- [ ] Pass GitHub Actions lint, unit tests, Android 16 build, signing verification and artifact upload.
+- [x] Pass GitHub Actions lint, unit tests, Android 16 build, signing verification and artifact upload.
+- [x] Verify the artifact ZIP and re-extract a complete APK after the first handoff file was found truncated.
 - [ ] Install the milestone APK over the current stable-signed app and inspect the CPU card.
 - [ ] Physically verify whether `/proc/stat` is readable and whether the displayed activity is plausible on the target.
 - [ ] Merge the verified CPU activity probe checkpoint.
