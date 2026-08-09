@@ -18,6 +18,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,6 +34,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -41,6 +43,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -57,11 +60,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -94,17 +100,22 @@ private val UnavailableAccent = Color(0xFFAEB8C9)
 
 class MainActivity : ComponentActivity() {
     private val allFilesAccessState = mutableStateOf(false)
+    private val usageAccessState = mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         allFilesAccessState.value = Environment.isExternalStorageManager()
+        usageAccessState.value = UsageAccessReader.isGranted(this)
         setContent {
             PremiumTheme {
                 CapabilityRoute(
                     context = this@MainActivity,
                     hasAllFilesAccess = allFilesAccessState.value,
+                    hasUsageAccess = usageAccessState.value,
                     onEnableAllFilesAccess = ::openAllFilesAccessSettings,
+                    onEnableUsageAccess = ::openUsageAccessSettings,
+                    onOpenApplicationSettings = ::openApplicationSettings,
                 )
             }
         }
@@ -113,6 +124,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         allFilesAccessState.value = Environment.isExternalStorageManager()
+        usageAccessState.value = UsageAccessReader.isGranted(this)
     }
 
     private fun openAllFilesAccessSettings() {
@@ -121,6 +133,18 @@ class MainActivity : ComponentActivity() {
         }
         runCatching { startActivity(appSettingsIntent) }.onFailure {
             runCatching { startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)) }
+        }
+    }
+
+    private fun openUsageAccessSettings() {
+        runCatching { startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
+    }
+
+    private fun openApplicationSettings(packageName: String) {
+        runCatching {
+            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.parse("package:$packageName")
+            })
         }
     }
 }
@@ -137,18 +161,29 @@ private fun PremiumTheme(content: @Composable () -> Unit) {
 private fun CapabilityRoute(
     context: Context,
     hasAllFilesAccess: Boolean,
+    hasUsageAccess: Boolean,
     onEnableAllFilesAccess: () -> Unit,
+    onEnableUsageAccess: () -> Unit,
+    onOpenApplicationSettings: (String) -> Unit,
 ) {
     val state = remember { mutableStateOf(SnapshotUiState<DeviceSnapshot>()) }
     val historyState = remember { mutableStateOf(HistoryUiState()) }
     val storageState = remember {
         mutableStateOf(StorageScanState(selectedTreeUri = StorageSelectionStore.read(context)))
     }
+    val exactDuplicateState = remember { mutableStateOf(ExactDuplicateUiState()) }
+    val appIntelligenceState = remember { mutableStateOf(AppIntelligenceUiState()) }
+    val networkState = remember { mutableStateOf(NetworkUsageUiState()) }
+    val appIntelligenceIncludeSystem = remember { mutableStateOf(false) }
     val executor = remember { Executors.newSingleThreadExecutor() }
     val mainHandler = remember { Handler(Looper.getMainLooper()) }
     val active = remember { AtomicBoolean(true) }
     val refreshGate = remember { SnapshotRefreshGate() }
     val storageScanInFlight = remember { AtomicBoolean(false) }
+    val exactDuplicateInFlight = remember { AtomicBoolean(false) }
+    val appIntelligenceInFlight = remember { AtomicBoolean(false) }
+    val networkInFlight = remember { AtomicBoolean(false) }
+    val cleanupInFlight = remember { AtomicBoolean(false) }
     val historyRepository = remember(context) { SnapshotHistoryRepository(context) }
 
     DisposableEffect(Unit) {
@@ -156,6 +191,10 @@ private fun CapabilityRoute(
             active.set(false)
             refreshGate.cancel()
             storageScanInFlight.set(false)
+            exactDuplicateInFlight.set(false)
+            appIntelligenceInFlight.set(false)
+            networkInFlight.set(false)
+            cleanupInFlight.set(false)
             executor.shutdownNow()
         }
     }
@@ -177,6 +216,31 @@ private fun CapabilityRoute(
             }
         }.onFailure {
             historyState.value = HistoryUiState(errorMessage = "Το τοπικό ιστορικό δεν είναι διαθέσιμο τώρα.")
+        }
+    }
+
+    fun clearHistory() {
+        if (!historyState.value.isLoading) {
+            historyState.value = historyState.value.copy(isLoading = true, errorMessage = null)
+        }
+        runCatching {
+            executor.execute {
+                val result = runCatching {
+                    historyRepository.clear()
+                    historyRepository.recent()
+                }
+                mainHandler.post {
+                    if (!active.get()) return@post
+                    historyState.value = result.fold(
+                        onSuccess = { entries -> HistoryUiState(entries = entries) },
+                        onFailure = {
+                            HistoryUiState(errorMessage = "Το τοπικό ιστορικό δεν διαγράφηκε.")
+                        },
+                    )
+                }
+            }
+        }.onFailure {
+            historyState.value = HistoryUiState(errorMessage = "Το τοπικό ιστορικό δεν διαγράφηκε.")
         }
     }
 
@@ -202,9 +266,10 @@ private fun CapabilityRoute(
         }
     }
 
-    fun scanStorage(uri: android.net.Uri) {
+    fun scanStorage(uri: Uri) {
         if (!storageScanInFlight.compareAndSet(false, true)) return
-
+        exactDuplicateState.value = ExactDuplicateUiState()
+        networkState.value = NetworkUsageUiState()
         storageState.value = storageState.value.copy(
             selectedTreeUri = uri,
             source = StorageScanSource.SELECTED_FOLDER,
@@ -245,8 +310,9 @@ private fun CapabilityRoute(
 
     fun scanAllStorage() {
         if (!storageScanInFlight.compareAndSet(false, true)) return
-
         val selectedTreeUri = storageState.value.selectedTreeUri
+        exactDuplicateState.value = ExactDuplicateUiState()
+        networkState.value = NetworkUsageUiState()
         storageState.value = storageState.value.copy(
             source = StorageScanSource.SHARED_STORAGE,
             isScanning = true,
@@ -284,6 +350,171 @@ private fun CapabilityRoute(
         }
     }
 
+    fun scanExactDuplicates() {
+        if (!exactDuplicateInFlight.compareAndSet(false, true)) return
+        val currentStorage = storageState.value
+        val source = currentStorage.source ?: when {
+            currentStorage.selectedTreeUri != null -> StorageScanSource.SELECTED_FOLDER
+            hasAllFilesAccess -> StorageScanSource.SHARED_STORAGE
+            else -> null
+        }
+        if (source == null) {
+            exactDuplicateState.value = ExactDuplicateUiState(
+                errorMessage = "Κάνε πρώτα σάρωση σε επιλεγμένο φάκελο ή ενεργοποίησε την πλήρη πρόσβαση αρχείων.",
+            )
+            exactDuplicateInFlight.set(false)
+            return
+        }
+        exactDuplicateState.value = ExactDuplicateUiState(isScanning = true)
+        runCatching {
+            executor.execute {
+                val result = runCatching {
+                    ExactDuplicateScanner.scan(
+                        context = context,
+                        source = source,
+                        selectedTreeUri = currentStorage.selectedTreeUri,
+                    )
+                }
+                mainHandler.post {
+                    exactDuplicateInFlight.set(false)
+                    if (!active.get()) return@post
+                    exactDuplicateState.value = result.fold(
+                        onSuccess = { scan -> ExactDuplicateUiState(result = scan) },
+                        onFailure = { error ->
+                            ExactDuplicateUiState(
+                                errorMessage = error.message ?: "Ο έλεγχος ακριβών διπλοτύπων απέτυχε.",
+                            )
+                        },
+                    )
+                }
+            }
+        }.onFailure {
+            exactDuplicateInFlight.set(false)
+            exactDuplicateState.value = ExactDuplicateUiState(
+                errorMessage = "Ο έλεγχος ακριβών διπλοτύπων απέτυχε.",
+            )
+        }
+    }
+
+    fun deleteSelectedDuplicates() {
+        if (!cleanupInFlight.compareAndSet(false, true)) return
+        val currentState = exactDuplicateState.value
+        val treeUri = storageState.value.selectedTreeUri
+        val result = currentState.result
+        if (storageState.value.source != StorageScanSource.SELECTED_FOLDER || treeUri == null || result == null) {
+            cleanupInFlight.set(false)
+            return
+        }
+        exactDuplicateState.value = currentState.copy(cleanupMessage = "Επαληθεύονται τα αρχεία πριν από κάθε διαγραφή…")
+        runCatching {
+            executor.execute {
+                val cleanup = runCatching {
+                    ExactDuplicateCleanup.deleteSelectedFolderDuplicates(
+                        context = context,
+                        selectedTreeUri = treeUri,
+                        result = result,
+                    )
+                }
+                mainHandler.post {
+                    cleanupInFlight.set(false)
+                    if (!active.get()) return@post
+                    exactDuplicateState.value = exactDuplicateState.value.copy(
+                        cleanupMessage = cleanup.fold(
+                            onSuccess = ExactDuplicatePresentation::cleanupLabel,
+                            onFailure = { error ->
+                                error.message ?: "Η διαγραφή ακυρώθηκε για λόγους ασφαλείας."
+                            },
+                        ),
+                    )
+                }
+            }
+        }.onFailure {
+            cleanupInFlight.set(false)
+            exactDuplicateState.value = exactDuplicateState.value.copy(
+                cleanupMessage = "Η διαγραφή ακυρώθηκε για λόγους ασφαλείας.",
+            )
+        }
+    }
+
+    fun scanAppIntelligence(includeSystemApps: Boolean = appIntelligenceIncludeSystem.value) {
+        appIntelligenceIncludeSystem.value = includeSystemApps
+        networkState.value = NetworkUsageUiState()
+        if (!hasUsageAccess) {
+            appIntelligenceState.value = AppIntelligenceUiState(
+                errorMessage = "Κάνε πρώτα ενεργή την πρόσβαση στα στατιστικά χρήσης από τις ρυθμίσεις Android.",
+            )
+            return
+        }
+        if (!appIntelligenceInFlight.compareAndSet(false, true)) return
+        appIntelligenceState.value = AppIntelligenceUiState(isScanning = true)
+        runCatching {
+            executor.execute {
+                val result = runCatching {
+                    AppIntelligenceScanner.scan(
+                        context = context,
+                        includeSystemApps = includeSystemApps,
+                    )
+                }
+                mainHandler.post {
+                    appIntelligenceInFlight.set(false)
+                    if (!active.get()) return@post
+                    appIntelligenceState.value = result.fold(
+                        onSuccess = { scan -> AppIntelligenceUiState(result = scan) },
+                        onFailure = { error ->
+                            AppIntelligenceUiState(
+                                errorMessage = error.message ?: "Η ανάλυση εφαρμογών απέτυχε.",
+                            )
+                        },
+                    )
+                }
+            }
+        }.onFailure {
+            appIntelligenceInFlight.set(false)
+            appIntelligenceState.value = AppIntelligenceUiState(
+                errorMessage = "Η ανάλυση εφαρμογών απέτυχε.",
+            )
+        }
+    }
+
+    fun scanNetworkUsage() {
+        val appResult = appIntelligenceState.value.result
+        if (appResult == null) {
+            networkState.value = NetworkUsageUiState(
+                errorMessage = "Κάνε πρώτα ανάλυση εφαρμογών.",
+            )
+            return
+        }
+        if (!networkInFlight.compareAndSet(false, true)) return
+        networkState.value = NetworkUsageUiState(isScanning = true)
+        runCatching {
+            executor.execute {
+                val result = runCatching {
+                    NetworkUsageScanner.scan(
+                        context = context,
+                        appEntries = appResult.entries,
+                    )
+                }
+                mainHandler.post {
+                    networkInFlight.set(false)
+                    if (!active.get()) return@post
+                    networkState.value = result.fold(
+                        onSuccess = { scan -> NetworkUsageUiState(result = scan) },
+                        onFailure = { error ->
+                            NetworkUsageUiState(
+                                errorMessage = error.message ?: "Η ανάλυση δικτύου απέτυχε.",
+                            )
+                        },
+                    )
+                }
+            }
+        }.onFailure {
+            networkInFlight.set(false)
+            networkState.value = NetworkUsageUiState(
+                errorMessage = "Η ανάλυση δικτύου απέτυχε.",
+            )
+        }
+    }
+
     val folderPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree(),
     ) { uri ->
@@ -291,7 +522,7 @@ private fun CapabilityRoute(
             runCatching {
                 context.contentResolver.takePersistableUriPermission(
                     uri,
-                    Intent.FLAG_GRANT_READ_URI_PERMISSION,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
                 )
             }
             StorageSelectionStore.save(context, uri)
@@ -301,7 +532,6 @@ private fun CapabilityRoute(
 
     fun refresh() {
         if (!refreshGate.tryStart(SystemClock.elapsedRealtime())) return
-
         state.value = state.value.beginRefresh()
         val submitResult = runCatching {
             executor.execute {
@@ -310,7 +540,6 @@ private fun CapabilityRoute(
                 val capturedAtMillis = System.currentTimeMillis()
                 mainHandler.post {
                     if (!active.get()) return@post
-
                     refreshGate.complete(completedAtElapsed)
                     state.value = result.fold(
                         onSuccess = { snapshot ->
@@ -324,7 +553,6 @@ private fun CapabilityRoute(
                 }
             }
         }
-
         submitResult.onFailure {
             refreshGate.complete(SystemClock.elapsedRealtime())
             state.value = state.value.failure("Η συλλογή του στιγμιότυπου απέτυχε. Δοκίμασε ξανά.")
@@ -346,8 +574,11 @@ private fun CapabilityRoute(
             historyState = historyState.value,
             storageState = storageState.value,
             hasAllFilesAccess = hasAllFilesAccess,
+            hasUsageAccess = hasUsageAccess,
             onChooseStorageFolder = { folderPicker.launch(null) },
             onEnableAllFilesAccess = onEnableAllFilesAccess,
+            onEnableUsageAccess = onEnableUsageAccess,
+            onOpenApplicationSettings = onOpenApplicationSettings,
             onScanAllStorage = ::scanAllStorage,
             onRescanStorage = {
                 when (storageState.value.source) {
@@ -356,6 +587,15 @@ private fun CapabilityRoute(
                         storageState.value.selectedTreeUri?.let(::scanStorage)
                 }
             },
+            exactDuplicateState = exactDuplicateState.value,
+            appIntelligenceState = appIntelligenceState.value,
+            appIntelligenceIncludeSystem = appIntelligenceIncludeSystem.value,
+            networkState = networkState.value,
+            onScanExactDuplicates = ::scanExactDuplicates,
+            onDeleteSelectedDuplicates = ::deleteSelectedDuplicates,
+            onScanAppIntelligence = ::scanAppIntelligence,
+            onScanNetworkUsage = ::scanNetworkUsage,
+            onClearHistory = ::clearHistory,
         )
 
         currentState.isRefreshing -> LoadingScreen()
@@ -365,7 +605,6 @@ private fun CapabilityRoute(
         )
     }
 }
-
 @Composable
 private fun LoadingScreen() {
     Scaffold(containerColor = MaterialTheme.colorScheme.background) { contentPadding ->
@@ -444,13 +683,62 @@ private fun CapabilityScreen(
     historyState: HistoryUiState,
     storageState: StorageScanState,
     hasAllFilesAccess: Boolean,
+    hasUsageAccess: Boolean,
     onChooseStorageFolder: () -> Unit,
     onEnableAllFilesAccess: () -> Unit,
+    onEnableUsageAccess: () -> Unit,
+    onOpenApplicationSettings: (String) -> Unit,
     onScanAllStorage: () -> Unit,
     onRescanStorage: () -> Unit,
+    exactDuplicateState: ExactDuplicateUiState,
+    appIntelligenceState: AppIntelligenceUiState,
+    appIntelligenceIncludeSystem: Boolean,
+    networkState: NetworkUsageUiState,
+    onScanExactDuplicates: () -> Unit,
+    onDeleteSelectedDuplicates: () -> Unit,
+    onScanAppIntelligence: (Boolean) -> Unit,
+    onScanNetworkUsage: () -> Unit,
+    onClearHistory: () -> Unit,
 ) {
     val diagnosis = remember(snapshot) { DeviceDiagnosisEngine.analyze(snapshot) }
     val overviewStatus = OverviewPresentation.status(diagnosis)
+    val personalBaseline = remember(snapshot, historyState.entries, state.capturedAtMillis) {
+        PersonalBaseline.evaluate(
+            current = snapshot,
+            currentCapturedAtMillis = state.capturedAtMillis,
+            history = historyState.entries,
+        )
+    }
+    val historyTrend = remember(snapshot, historyState.entries, state.capturedAtMillis) {
+        HistoryTrends.evaluate(
+            current = snapshot,
+            currentCapturedAtMillis = state.capturedAtMillis,
+            history = historyState.entries,
+        )
+    }
+    val insights = remember(
+        snapshot,
+        appIntelligenceState.result,
+        storageState.result,
+        exactDuplicateState.result,
+        networkState.result,
+    ) {
+        DeviceInsights.evaluate(
+            snapshot = snapshot,
+            appResult = appIntelligenceState.result,
+            storageResult = storageState.result,
+            duplicateResult = exactDuplicateState.result,
+            networkResult = networkState.result,
+        )
+    }
+    val chartPoints = remember(snapshot, historyState.entries, state.capturedAtMillis) {
+        HistoryChartData.points(snapshot, state.capturedAtMillis, historyState.entries)
+    }
+    val duplicateSource = storageState.source ?: when {
+        storageState.selectedTreeUri != null -> StorageScanSource.SELECTED_FOLDER
+        hasAllFilesAccess -> StorageScanSource.SHARED_STORAGE
+        else -> null
+    }
 
     Scaffold(containerColor = MaterialTheme.colorScheme.background) { contentPadding ->
         LazyColumn(
@@ -460,18 +748,20 @@ private fun CapabilityScreen(
             contentPadding = PaddingValues(start = 20.dp, top = 22.dp, end = 20.dp, bottom = 36.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
+            item { OverviewHeader() }
+            item { OverviewHero(status = overviewStatus, report = diagnosis) }
+            item { SnapshotControls(state = state, onRefresh = onRefresh) }
             item {
-                OverviewHeader()
+                HistoryCard(state = historyState, onClearHistory = onClearHistory)
             }
             item {
-                OverviewHero(status = overviewStatus, report = diagnosis)
+                HistoryChartCard(points = chartPoints)
             }
             item {
-                SnapshotControls(state = state, onRefresh = onRefresh)
+                PersonalBaselineCard(result = personalBaseline, historyState = historyState)
             }
-            item {
-                HistoryCard(state = historyState)
-            }
+            item { HistoryTrendCard(result = historyTrend) }
+            item { DeviceInsightsCard(result = insights) }
             item {
                 SectionHeading(
                     title = "Γρήγορη εικόνα",
@@ -516,17 +806,11 @@ private fun CapabilityScreen(
                         title = "CPU",
                         value = OverviewPresentation.cpuValue(snapshot.cpu),
                         supporting = OverviewPresentation.cpuSupport(snapshot.cpu),
-                        tone = if (snapshot.cpu.activityPercent == null) {
-                            OverviewTone.UNAVAILABLE
-                        } else {
-                            OverviewTone.INFO
-                        },
+                        tone = if (snapshot.cpu.activityPercent == null) OverviewTone.UNAVAILABLE else OverviewTone.INFO,
                     )
                 }
             }
-            item {
-                StorageCard(snapshot = snapshot)
-            }
+            item { StorageCard(snapshot = snapshot) }
             item {
                 StorageIntelligenceCard(
                     state = storageState,
@@ -538,16 +822,46 @@ private fun CapabilityScreen(
                 )
             }
             item {
-                DiagnosisCard(report = diagnosis)
+                ExactDuplicateCard(
+                    state = exactDuplicateState,
+                    source = duplicateSource,
+                    selectedTreeUri = storageState.selectedTreeUri,
+                    hasAllFilesAccess = hasAllFilesAccess,
+                    onScan = onScanExactDuplicates,
+                    onDeleteDuplicates = onDeleteSelectedDuplicates,
+                )
             }
             item {
-                BatteryCard(snapshot = snapshot.battery)
+                AppIntelligenceCard(
+                    state = appIntelligenceState,
+                    hasUsageAccess = hasUsageAccess,
+                    includeSystemApps = appIntelligenceIncludeSystem,
+                    onEnableUsageAccess = onEnableUsageAccess,
+                    onScan = onScanAppIntelligence,
+                    onToggleSystemApps = {
+                        onScanAppIntelligence(!appIntelligenceIncludeSystem)
+                    },
+                    onOpenApplicationSettings = onOpenApplicationSettings,
+                )
             }
             item {
-                MemoryDetailsCard(snapshot = snapshot)
+                NetworkUsageCard(
+                    state = networkState,
+                    hasUsageAccess = hasUsageAccess,
+                    onScan = onScanNetworkUsage,
+                )
             }
+            item { DiagnosisCard(report = diagnosis) }
+            item { BatteryCard(snapshot = snapshot.battery) }
+            item { MemoryDetailsCard(snapshot = snapshot) }
             item {
-                AccessCard(snapshot = snapshot, hasAllFilesAccess = hasAllFilesAccess)
+                AccessCard(
+                    snapshot = snapshot,
+                    hasAllFilesAccess = hasAllFilesAccess,
+                    hasUsageAccess = hasUsageAccess,
+                    onEnableAllFilesAccess = onEnableAllFilesAccess,
+                    onEnableUsageAccess = onEnableUsageAccess,
+                )
             }
             item {
                 Text(
@@ -695,7 +1009,12 @@ private fun SnapshotControls(
 }
 
 @Composable
-private fun HistoryCard(state: HistoryUiState) {
+private fun HistoryCard(
+    state: HistoryUiState,
+    onClearHistory: () -> Unit,
+) {
+    var confirmClear by remember { mutableStateOf(false) }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -737,23 +1056,194 @@ private fun HistoryCard(state: HistoryUiState) {
             }
 
             state.errorMessage?.let { message ->
+                Text(text = message, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            }
+            state.entries.take(3).forEach { entry -> HistoryRow(entry = entry) }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Text(
-                    text = message,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
+                    text = "Δεν συγχρονίζεται και δεν αποστέλλεται εκτός συσκευής.",
+                    modifier = Modifier.weight(1f).padding(end = 8.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                if (state.entries.isNotEmpty()) {
+                    TextButton(onClick = { confirmClear = true }, enabled = !state.isLoading) {
+                        Text(text = "Καθαρισμός")
+                    }
+                }
+            }
+        }
+    }
+
+    if (confirmClear) {
+        AlertDialog(
+            onDismissRequest = { confirmClear = false },
+            title = { Text(text = "Διαγραφή τοπικού ιστορικού;") },
+            text = {
+                Text(text = "Θα αφαιρεθούν μόνο τα στιγμιότυπα που έχουν αποθηκευτεί σε αυτή τη συσκευή. Δεν διαγράφονται αρχεία.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmClear = false
+                        onClearHistory()
+                    },
+                ) {
+                    Text(text = "Διαγραφή")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmClear = false }) {
+                    Text(text = "Άκυρο")
+                }
+            },
+        )
+    }
+}
+
+@Composable
+private fun PersonalBaselineCard(
+    result: PersonalBaselineResult,
+    historyState: HistoryUiState,
+) {
+    val tone = when {
+        historyState.errorMessage != null -> OverviewTone.UNAVAILABLE
+        result.state == PersonalBaselineState.INSUFFICIENT_DATA -> OverviewTone.UNAVAILABLE
+        else -> OverviewTone.INFO
+    }
+    val badge = when {
+        historyState.errorMessage != null -> "Μη διαθέσιμο"
+        else -> PersonalBaselinePresentation.statusLabel(result.state)
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = toneContainer(tone)),
+        shape = RoundedCornerShape(22.dp),
+        border = BorderStroke(1.dp, toneAccent(tone).copy(alpha = 0.28f)),
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(9.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top,
+            ) {
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(text = "Προσωπική αναφορά", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        text = "Σύγκριση με προηγούμενες λήψεις της ίδιας συσκευής",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                StatusBadge(text = badge, tone = tone)
             }
 
-            state.entries.take(3).forEach { entry ->
-                HistoryRow(entry = entry)
+            when {
+                historyState.errorMessage != null -> {
+                    Text(
+                        text = historyState.errorMessage,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+
+                historyState.isLoading && historyState.entries.isEmpty() -> {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(9.dp),
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                        Text(text = "Φόρτωση προηγούμενων λήψεων…", style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+
+                result.state == PersonalBaselineState.INSUFFICIENT_DATA -> {
+                    Text(
+                        text = PersonalBaselinePresentation.summary(result),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Text(
+                        text = "Η σύγκριση ενεργοποιείται μόνο με επιτυχείς προηγούμενες λήψεις. Η τρέχουσα λήψη δεν μετράει ως προηγούμενο δείγμα.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                else -> {
+                    Text(
+                        text = PersonalBaselinePresentation.summary(result),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    result.availableMemory?.let { metric ->
+                        PersonalBaselineMetricRow(
+                            title = "Διαθέσιμη RAM",
+                            metric = metric,
+                            evidence = PersonalBaselinePresentation.memoryEvidence(metric),
+                        )
+                    }
+                    result.availableStorage?.let { metric ->
+                        PersonalBaselineMetricRow(
+                            title = "Διαθέσιμος χώρος δεδομένων",
+                            metric = metric,
+                            evidence = PersonalBaselinePresentation.storageEvidence(metric),
+                        )
+                    }
+                    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Text(
+                            text = "Σήματα πλαισίου",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Text(
+                            text = PersonalBaselinePresentation.lowMemoryEvidence(result),
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                        Text(
+                            text = PersonalBaselinePresentation.thermalEvidence(result),
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                }
             }
 
             Text(
-                text = "Δεν συγχρονίζεται και δεν αποστέλλεται εκτός συσκευής.",
+                text = PersonalBaselinePresentation.limitation(),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+    }
+}
+
+@Composable
+private fun PersonalBaselineMetricRow(
+    title: String,
+    metric: PersonalBaselineNumericMetric,
+    evidence: String,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text(text = title, style = MaterialTheme.typography.labelLarge)
+            Text(
+                text = PersonalBaselinePresentation.relationLabel(metric.relation),
+                style = MaterialTheme.typography.labelSmall,
+                color = toneAccent(OverviewTone.INFO),
+            )
+        }
+        Text(text = evidence, style = MaterialTheme.typography.bodySmall)
     }
 }
 
@@ -1110,6 +1600,666 @@ private fun StorageCard(snapshot: DeviceSnapshot) {
     }
 }
 
+
+@Composable
+private fun HistoryChartCard(points: List<HistoryChartPoint>) {
+    val hasChart = points.size >= 2
+    Card(
+        modifier = Modifier.fillMaxWidth().animateContentSize(),
+        colors = CardDefaults.cardColors(containerColor = toneContainer(OverviewTone.NEUTRAL)),
+        shape = RoundedCornerShape(26.dp),
+        border = BorderStroke(1.dp, toneAccent(OverviewTone.NEUTRAL).copy(alpha = 0.28f)),
+    ) {
+        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+            Text(text = "Γράφημα ιστορικού", style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = "RAM, διαθέσιμος χώρος και μπαταρία από τις τοπικές λήψεις",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            if (hasChart) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(132.dp)
+                        .semantics { contentDescription = "Γράφημα τάσεων ιστορικού συσκευής" },
+                ) {
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        val horizontalPadding = 6f
+                        val verticalPadding = 8f
+                        fun drawSeries(values: List<Float>, color: Color) {
+                            if (values.size < 2) return
+                            val minValue = values.minOrNull() ?: return
+                            val maxValue = values.maxOrNull() ?: return
+                            val range = (maxValue - minValue).takeIf { it > 0.001f } ?: 1f
+                            fun point(index: Int): Offset {
+                                val x = horizontalPadding +
+                                    (size.width - horizontalPadding * 2f) * index / (values.size - 1).toFloat()
+                                val y = size.height - verticalPadding -
+                                    (size.height - verticalPadding * 2f) * (values[index] - minValue) / range
+                                return Offset(x, y)
+                            }
+                            for (index in 0 until values.lastIndex) {
+                                drawLine(
+                                    color = color,
+                                    start = point(index),
+                                    end = point(index + 1),
+                                    strokeWidth = 5f,
+                                )
+                            }
+                        }
+                        drawSeries(points.map { it.availableMemoryGib }, NeutralAccent)
+                        drawSeries(points.map { it.availableStorageGib }, InfoAccent)
+                        drawSeries(points.mapNotNull { it.batteryPercent }, WarningAccent)
+                    }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Text(text = "● RAM", style = MaterialTheme.typography.labelSmall, color = NeutralAccent)
+                    Text(text = "● χώρος", style = MaterialTheme.typography.labelSmall, color = InfoAccent)
+                    Text(text = "● μπαταρία", style = MaterialTheme.typography.labelSmall, color = WarningAccent)
+                }
+            } else {
+                Text(
+                    text = "Χρειάζονται τουλάχιστον δύο επιτυχείς λήψεις για να εμφανιστεί γραμμή τάσης.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Text(
+                text = HistoryChartData.limitation(),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun DeviceInsightsCard(result: DeviceInsightsResult) {
+    val tone = result.insights.firstOrNull()?.let {
+        when (it.severity) {
+            DeviceInsightSeverity.INFO -> OverviewTone.INFO
+            DeviceInsightSeverity.WARNING -> OverviewTone.WARNING
+            DeviceInsightSeverity.CRITICAL -> OverviewTone.CRITICAL
+        }
+    } ?: OverviewTone.UNAVAILABLE
+    Card(
+        modifier = Modifier.fillMaxWidth().animateContentSize(),
+        colors = CardDefaults.cardColors(containerColor = toneContainer(tone)),
+        shape = RoundedCornerShape(26.dp),
+        border = BorderStroke(1.dp, toneAccent(tone).copy(alpha = 0.30f)),
+    ) {
+        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top,
+            ) {
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(text = "Έξυπνη σύνοψη", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        text = DeviceInsightsPresentation.summary(result),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                StatusBadge(text = "Τεκμήρια", tone = tone)
+            }
+            result.insights.take(5).forEach { insight ->
+                Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = insight.title,
+                            modifier = Modifier.weight(1f).padding(end = 8.dp),
+                            style = MaterialTheme.typography.titleSmall,
+                        )
+                        StatusBadge(
+                            text = DeviceInsightsPresentation.severityLabel(insight.severity),
+                            tone = when (insight.severity) {
+                                DeviceInsightSeverity.INFO -> OverviewTone.INFO
+                                DeviceInsightSeverity.WARNING -> OverviewTone.WARNING
+                                DeviceInsightSeverity.CRITICAL -> OverviewTone.CRITICAL
+                            },
+                        )
+                    }
+                    Text(text = insight.evidence, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+            Text(
+                text = "Η σύνοψη περιγράφει παρατηρήσεις· δεν είναι βαθμολογία, διάγνωση ή αυτόματη ενέργεια.",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun NetworkUsageCard(
+    state: NetworkUsageUiState,
+    hasUsageAccess: Boolean,
+    onScan: () -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth().animateContentSize(),
+        colors = CardDefaults.cardColors(containerColor = toneContainer(OverviewTone.INFO)),
+        shape = RoundedCornerShape(26.dp),
+        border = BorderStroke(1.dp, toneAccent(OverviewTone.INFO).copy(alpha = 0.28f)),
+    ) {
+        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top,
+            ) {
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(text = "Κίνηση δικτύου", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        text = "Συγκεντρωτικά στοιχεία ανά εφαρμογή για 7 ημέρες",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                StatusBadge(
+                    text = if (hasUsageAccess) "Με εντολή" else "Απαιτείται πρόσβαση",
+                    tone = if (hasUsageAccess) OverviewTone.INFO else OverviewTone.UNAVAILABLE,
+                )
+            }
+            state.result?.let { result ->
+                Text(text = NetworkUsagePresentation.summary(result), style = MaterialTheme.typography.bodyMedium)
+                result.entries.take(5).forEach { entry ->
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(text = entry.label, style = MaterialTheme.typography.titleSmall)
+                        Text(
+                            text = NetworkUsagePresentation.directionLabel(entry),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+                Text(
+                    text = NetworkUsagePresentation.limitation(),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } ?: Text(
+                text = "Δεν έχει εκτελεστεί ανάλυση δικτύου.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            state.errorMessage?.let {
+                Text(text = it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            }
+            Button(
+                onClick = onScan,
+                enabled = hasUsageAccess && !state.isScanning,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                ),
+            ) {
+                if (state.isScanning) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                }
+                Text(text = if (state.isScanning) "Ανάλυση δικτύου…" else "Ανάλυση δικτύου 7 ημερών")
+            }
+        }
+    }
+}
+
+@Composable
+private fun HistoryTrendCard(result: HistoryTrendResult) {
+    val ready = result.state == HistoryTrendState.READY
+    val tone = if (ready) OverviewTone.INFO else OverviewTone.UNAVAILABLE
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize(),
+        colors = CardDefaults.cardColors(containerColor = toneContainer(tone)),
+        shape = RoundedCornerShape(26.dp),
+        border = BorderStroke(1.dp, toneAccent(tone).copy(alpha = 0.30f)),
+    ) {
+        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top,
+            ) {
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(text = "Τάσεις ιστορικού", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        text = "Σύγκριση με προηγούμενες επιτυχείς λήψεις της ίδιας συσκευής",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                StatusBadge(
+                    text = if (ready) "Έτοιμη ένδειξη" else "Χρειάζεται δείγματα",
+                    tone = tone,
+                )
+            }
+            Text(
+                text = HistoryTrendPresentation.summary(result),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            if (ready) {
+                result.battery?.let {
+                    TrendEvidenceRow(
+                        title = "Μπαταρία",
+                        evidence = HistoryTrendPresentation.batteryEvidence(it),
+                    )
+                }
+                result.availableStorage?.let {
+                    TrendEvidenceRow(
+                        title = "Διαθέσιμος χώρος",
+                        evidence = HistoryTrendPresentation.storageEvidence(it),
+                    )
+                }
+                TrendEvidenceRow(
+                    title = "Θερμικό πλαίσιο",
+                    evidence = HistoryTrendPresentation.thermalEvidence(result),
+                )
+            } else {
+                Text(
+                    text = "Η εφαρμογή περιμένει περισσότερα τοπικά στιγμιότυπα πριν εμφανίσει μεταβολή.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Text(
+                text = HistoryTrendPresentation.limitation(),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun TrendEvidenceRow(title: String, evidence: String) {
+    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Text(text = evidence, style = MaterialTheme.typography.bodySmall)
+    }
+}
+
+@Composable
+private fun ExactDuplicateCard(
+    state: ExactDuplicateUiState,
+    source: StorageScanSource?,
+    selectedTreeUri: Uri?,
+    hasAllFilesAccess: Boolean,
+    onScan: () -> Unit,
+    onDeleteDuplicates: () -> Unit,
+) {
+    var confirmDelete by remember(state.result) { mutableStateOf(false) }
+    val canScan = when (source) {
+        StorageScanSource.SELECTED_FOLDER -> selectedTreeUri != null
+        StorageScanSource.SHARED_STORAGE -> hasAllFilesAccess
+        null -> false
+    }
+    val canDelete = source == StorageScanSource.SELECTED_FOLDER &&
+        selectedTreeUri != null &&
+        state.result?.groups?.any { it.fileUris.size >= 2 } == true
+
+    Card(
+        modifier = Modifier.fillMaxWidth().animateContentSize(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(26.dp),
+        border = BorderStroke(1.dp, toneAccent(OverviewTone.INFO).copy(alpha = 0.28f)),
+    ) {
+        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top,
+            ) {
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(text = "Ακριβή διπλότυπα", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        text = "Έλεγχος SHA-256 με ασφαλή, προαιρετική διαγραφή μόνο σε επιλεγμένο φάκελο",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                StatusBadge(
+                    text = if (canDelete) "Έτοιμο για έλεγχο" else "Read-only",
+                    tone = OverviewTone.INFO,
+                )
+            }
+            Text(
+                text = when (source) {
+                    StorageScanSource.SELECTED_FOLDER -> "Πηγή: επιλεγμένος φάκελος"
+                    StorageScanSource.SHARED_STORAGE -> "Πηγή: κοινόχρηστοι χώροι"
+                    null -> "Πηγή: δεν έχει επιλεγεί"
+                },
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            state.result?.let { result ->
+                Text(
+                    text = ExactDuplicatePresentation.summary(result),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                if (result.groups.isEmpty()) {
+                    Text(
+                        text = "Δεν επιβεβαιώθηκαν ακριβείς ομάδες με τα διαθέσιμα όρια ελέγχου.",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                } else {
+                    result.groups.take(5).forEach { group ->
+                        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                            Text(
+                                text = ExactDuplicatePresentation.groupLabel(group),
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                            Text(
+                                text = group.fileNames.joinToString(" · "),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 3,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
+                }
+                Text(
+                    text = ExactDuplicatePresentation.limitation(result),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            state.cleanupMessage?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+            state.errorMessage?.let {
+                Text(text = it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            }
+            Button(
+                onClick = onScan,
+                enabled = canScan && !state.isScanning,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                ),
+            ) {
+                if (state.isScanning) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                }
+                Text(
+                    text = when {
+                        state.isScanning -> "Έλεγχος περιεχομένου…"
+                        state.result != null -> "Έλεγχος ξανά"
+                        else -> "Έλεγχος ακριβών διπλοτύπων"
+                    },
+                )
+            }
+            if (canDelete) {
+                Button(
+                    onClick = { confirmDelete = true },
+                    enabled = state.cleanupMessage?.startsWith("Επαληθεύονται") != true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.secondary,
+                        contentColor = MaterialTheme.colorScheme.onSecondary,
+                    ),
+                ) {
+                    Text(text = "Διαγραφή αντιγράφων (κρατά ένα)")
+                }
+            }
+            Text(
+                text = when {
+                    canDelete -> "Η διαγραφή είναι προαιρετική: κρατά το πρώτο από κάθε επιβεβαιωμένη ομάδα, επαληθεύει ξανά μέγεθος και SHA-256 και σταματά αν κάτι αλλάξει."
+                    canScan -> "Η σύγκριση διαβάζει περιεχόμενο μόνο μετά από δική σου εντολή· ο κοινόχρηστος χώρος παραμένει read-only."
+                    else -> "Κάνε πρώτα σάρωση σε επιλεγμένο φάκελο ή ενεργοποίησε την πλήρη πρόσβαση αρχείων."
+                },
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+
+    if (confirmDelete) {
+        AlertDialog(
+            onDismissRequest = { confirmDelete = false },
+            title = { Text(text = "Διαγραφή επιβεβαιωμένων αντιγράφων;") },
+            text = {
+                Text(text = "Θα κρατηθεί ένα αρχείο ανά ομάδα. Κάθε υποψήφιο επαληθεύεται ξανά πριν διαγραφεί και ό,τι δεν επαληθεύεται παραλείπεται.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmDelete = false
+                        onDeleteDuplicates()
+                    },
+                ) {
+                    Text(text = "Συνέχεια")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDelete = false }) {
+                    Text(text = "Άκυρο")
+                }
+            },
+        )
+    }
+}
+
+@Composable
+private fun AppIntelligenceCard(
+    state: AppIntelligenceUiState,
+    hasUsageAccess: Boolean,
+    includeSystemApps: Boolean,
+    onEnableUsageAccess: () -> Unit,
+    onScan: (Boolean) -> Unit,
+    onToggleSystemApps: () -> Unit,
+    onOpenApplicationSettings: (String) -> Unit,
+) {
+    var expanded by remember(state.result) { mutableStateOf(false) }
+
+    Card(
+        modifier = Modifier.fillMaxWidth().animateContentSize(),
+        colors = CardDefaults.cardColors(containerColor = toneContainer(OverviewTone.INFO)),
+        shape = RoundedCornerShape(26.dp),
+        border = BorderStroke(1.dp, toneAccent(OverviewTone.INFO).copy(alpha = 0.30f)),
+    ) {
+        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top,
+            ) {
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(text = "Νοημοσύνη εφαρμογών", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        text = "Όλες οι εφαρμογές που βλέπει το Android, ακόμη και χωρίς εικονίδιο",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                StatusBadge(
+                    text = if (hasUsageAccess) "Πρόσβαση ενεργή" else "Απαιτείται πρόσβαση",
+                    tone = if (hasUsageAccess) OverviewTone.NEUTRAL else OverviewTone.UNAVAILABLE,
+                )
+            }
+            if (!hasUsageAccess) {
+                Text(
+                    text = "Το Android κρατά αυτά τα δεδομένα πίσω από ειδική πρόσβαση. Η εφαρμογή δεν την ενεργοποιεί μόνη της.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            } else {
+                state.result?.let { result ->
+                    Text(text = AppIntelligencePresentation.summary(result), style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        text = "Η λίστα περιλαμβάνει " + result.entries.size + " καταχωρίσεις. Οι εφαρμογές χωρίς χρήση παραμένουν ορατές.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    val visibleEntries = if (expanded) result.entries else result.entries.take(8)
+                    LazyColumn(
+                        modifier = Modifier.fillMaxWidth().height(380.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        items(
+                            items = visibleEntries,
+                            key = { it.packageName },
+                        ) { entry ->
+                            AppUsageRow(
+                                entry = entry,
+                                onOpenSettings = { onOpenApplicationSettings(entry.packageName) },
+                            )
+                        }
+                    }
+                    if (result.entries.size > 8) {
+                        TextButton(
+                            onClick = { expanded = !expanded },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(text = if (expanded) "Προβολή λιγότερων" else "Προβολή όλων των εφαρμογών")
+                        }
+                    }
+                    TextButton(
+                        onClick = onToggleSystemApps,
+                        enabled = !state.isScanning,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            text = if (result.includeSystemApps) {
+                                "Απόκρυψη εφαρμογών συστήματος"
+                            } else {
+                                "Συμπερίληψη εφαρμογών συστήματος"
+                            },
+                        )
+                    }
+                    if (result.wasTruncated) {
+                        Text(
+                            text = "Το Android επέστρεψε περισσότερες από " + AppIntelligenceScanner.MAX_APPS +
+                                " καταχωρίσεις· εμφανίζεται το ελεγχόμενο όριο.",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.secondary,
+                        )
+                    }
+                    Text(
+                        text = AppIntelligencePresentation.limitation(),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } ?: Text(
+                    text = "Δεν έχει εκτελεστεί ανάλυση εφαρμογών.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            state.errorMessage?.let {
+                Text(text = it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            }
+            Button(
+                onClick = if (hasUsageAccess) {
+                    { onScan(includeSystemApps) }
+                } else {
+                    onEnableUsageAccess
+                },
+                enabled = !state.isScanning,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                ),
+            ) {
+                if (state.isScanning) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                }
+                Text(
+                    text = when {
+                        state.isScanning -> "Ανάλυση…"
+                        hasUsageAccess && state.result != null -> "Ανάλυση ξανά"
+                        hasUsageAccess -> "Ανάλυση όλων των εφαρμογών"
+                        else -> "Άνοιγμα πρόσβασης χρήσης"
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AppUsageRow(
+    entry: AppUsageEntry,
+    onOpenSettings: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text(
+                text = entry.label,
+                style = MaterialTheme.typography.titleSmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = AppIntelligencePresentation.scopeLabel(entry) + " · " +
+                    AppIntelligencePresentation.launchabilityLabel(entry),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary,
+            )
+            Text(
+                text = AppIntelligencePresentation.foregroundLabel(entry.foregroundMillis) + " · " +
+                    AppIntelligencePresentation.storageLabel(entry.storageBytes),
+                style = MaterialTheme.typography.bodySmall,
+            )
+            Text(
+                text = AppIntelligencePresentation.lastUsedLabel(entry.lastUsedMillis) + " · " +
+                    AppIntelligencePresentation.zeroUsageLabel(entry),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        TextButton(onClick = onOpenSettings) {
+            Text(text = "Ρυθμίσεις")
+        }
+    }
+}
+
 @Composable
 private fun DiagnosisCard(report: DiagnosisReport) {
     val status = OverviewPresentation.status(report)
@@ -1328,7 +2478,13 @@ private fun MemoryDetailsCard(snapshot: DeviceSnapshot) {
 }
 
 @Composable
-private fun AccessCard(snapshot: DeviceSnapshot, hasAllFilesAccess: Boolean) {
+private fun AccessCard(
+    snapshot: DeviceSnapshot,
+    hasAllFilesAccess: Boolean,
+    hasUsageAccess: Boolean,
+    onEnableAllFilesAccess: () -> Unit,
+    onEnableUsageAccess: () -> Unit,
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -1337,10 +2493,10 @@ private fun AccessCard(snapshot: DeviceSnapshot, hasAllFilesAccess: Boolean) {
     ) {
         Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(text = "Ειδικές προσβάσεις", style = MaterialTheme.typography.titleMedium)
-            AccessRow("Στατιστικά χρήσης", snapshot.hasUsageAccess)
-            AccessRow("Πρόσβαση όλων των αρχείων", hasAllFilesAccess)
+            AccessRow("Στατιστικά χρήσης", hasUsageAccess, onEnableUsageAccess)
+            AccessRow("Πρόσβαση όλων των αρχείων", hasAllFilesAccess, onEnableAllFilesAccess)
             Text(
-                text = "Η εφαρμογή δεν ζητά πρόσβαση αυτόματα.",
+                text = "Η εφαρμογή δεν ζητά πρόσβαση αυτόματα. Ενεργοποιείς μόνο ό,τι χρειάζεσαι.",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -1349,23 +2505,24 @@ private fun AccessCard(snapshot: DeviceSnapshot, hasAllFilesAccess: Boolean) {
 }
 
 @Composable
-private fun AccessRow(label: String, granted: Boolean) {
+private fun AccessRow(label: String, granted: Boolean, onOpen: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = label,
-            modifier = Modifier
-                .weight(1f)
-                .padding(end = 12.dp),
+            modifier = Modifier.weight(1f).padding(end = 4.dp),
             style = MaterialTheme.typography.bodyMedium,
         )
-        StatusBadge(
-            text = SnapshotPresentation.accessLabel(granted),
-            tone = if (granted) OverviewTone.NEUTRAL else OverviewTone.UNAVAILABLE,
-        )
+        if (granted) {
+            StatusBadge(text = SnapshotPresentation.accessLabel(true), tone = OverviewTone.NEUTRAL)
+        } else {
+            TextButton(onClick = onOpen) {
+                Text(text = "Άνοιγμα")
+            }
+        }
     }
 }
 

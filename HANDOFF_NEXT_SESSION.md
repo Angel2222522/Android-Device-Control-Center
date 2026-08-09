@@ -93,3 +93,13 @@
 - The user confirmed the complete physical gate on the OPPO A60 5G. The repository must not claim numeric CPU activity or usable battery voltage on this device.
 - Storage intelligence is metadata-only and read-only. SAF remains the privacy-preserving default path; `MANAGE_EXTERNAL_STORAGE` is optional, explicit and limited to shared storage rather than private app directories.
 - Next bounded milestone proposal: personal-baseline v1 using existing local history, with insufficient-data handling and no score or automatic action.
+
+
+## 2026-08-09 — Latest handoff: unified capability v1
+
+- PR #13 (personal baseline) was closed as superseded; PR #14 is the active draft.
+- PR #14 head commit: 876995b20f8f5c8eb5551e5b07bb4145a6856d4a.
+- The batch includes app intelligence v1, exact duplicate detection v1 and history trends v1.
+- CI run 31330771005 passed with 49 tests/0 failures, lint 0 errors/15 warnings, Android 16 build and stable certificate verification.
+- Final APK SHA-256: fb72c624277265bceb4e2f7b2604d59182217048c1f0d708c371f9cf23eb90cb.
+- The APK is ready for one physical installation and inspection. Do not mark PR #14 ready or merge it until the new cards and permission-gated paths are checked on the OPPO A60 5G.

@@ -157,3 +157,14 @@ Snapshot lifecycle v1 is the next bounded slice on draft PR #10. It improves the
 - The merged line now includes local Room history capped at 120 successful snapshots, explicit SAF folder selection with read-only metadata scan, optional explicitly triggered shared-storage metadata scan, and truthful same-size candidate wording. No content hashing, deletion, movement, background scan or automatic permission request was introduced.
 - The target limitations remain: numeric device-level CPU activity and usable battery voltage are unavailable.
 - Recommended next bounded milestone: read-only personal-baseline v1 from the existing local history, with minimum-sample/insufficient-data handling, explicit evidence and no score, causal certainty or automatic action.
+
+
+## 2026-08-09 — Unified capability v1 CI checkpoint (PR #14)
+
+- PR #14 on branch agent/intelligence-final-v1 contains the next serious capability batch after the personal baseline proposal.
+- App intelligence v1 is implemented as an explicit Usage Access flow: a seven-day aggregate of visible launcher applications, StorageStats where Android exposes it, and read-only links to each application's Android settings.
+- Exact duplicate detection v1 is implemented as an explicit, read-only SHA-256 content comparison for the selected folder or explicitly authorized shared storage. It is capped at 20,000 entries and 256 MiB hashed content; it never deletes or moves files.
+- History trends v1 compares battery, available storage and thermal context against at least five previous successful local snapshots. It is not continuous monitoring and does not infer cause.
+- CI run 31330771005 passed: 49 tests, 0 failures, lint 0 errors and 15 warnings, Android 16 build and stable certificate verification.
+- Final APK SHA-256: fb72c624277265bceb4e2f7b2604d59182217048c1f0d708c371f9cf23eb90cb.
+- The PR remains draft until the new APK is installed and visually inspected on the OPPO A60 5G. No physical verification claim is made for these new cards yet.
