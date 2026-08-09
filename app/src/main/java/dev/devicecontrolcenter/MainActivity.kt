@@ -900,11 +900,7 @@ private fun PersonalBaselineMetricRow(
     evidence: String,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(text = title, style = MaterialTheme.typography.labelLarge)
             Text(
                 text = PersonalBaselinePresentation.relationLabel(metric.relation),
