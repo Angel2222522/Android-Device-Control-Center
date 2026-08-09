@@ -15,6 +15,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import java.util.Locale
 import java.util.UUID
+import java.util.concurrent.Callable
 
 const val SNAPSHOT_HISTORY_LIMIT = 120
 const val APP_USAGE_HISTORY_PER_PACKAGE_LIMIT = 120
@@ -272,7 +273,7 @@ abstract class SnapshotHistoryDatabase : RoomDatabase() {
                 context.applicationContext,
                 SnapshotHistoryDatabase::class.java,
                 DATABASE_NAME,
-            ).addMigrations(*MIGRATIONS.toTypedArray())
+            ).addMigrations(*MIGRATIONS)
                 .build().also { instance = it }
         }
 
@@ -367,7 +368,7 @@ abstract class SnapshotHistoryDatabase : RoomDatabase() {
             }
         }
 
-        private val MIGRATIONS = arrayOf(
+        private val MIGRATIONS: Array<Migration> = arrayOf(
             MIGRATION_1_2,
             MIGRATION_2_3,
             MIGRATION_3_4,
@@ -415,9 +416,9 @@ class SnapshotHistoryRepository(context: Context) {
      * callers should use [recordWithAction] so both writes share one transaction.
      */
     fun record(snapshot: DeviceSnapshot, capturedAtMillis: Long): HistoryWriteResult =
-        database.runInTransaction {
+        database.runInTransaction(Callable {
             writeTelemetry(snapshot, capturedAtMillis, UUID.randomUUID().toString())
-        }
+        })
 
     fun recent(): List<SnapshotHistoryEntity> = dao.recent(SNAPSHOT_HISTORY_LIMIT)
 
@@ -462,7 +463,7 @@ class SnapshotHistoryRepository(context: Context) {
 
     /** Records one sample per visible package in one transaction. */
     fun recordAppUsage(samples: List<AppUsageHistorySample>): Int =
-        database.runInTransaction {
+        database.runInTransaction(Callable {
             val lastClearedAtMillis = metadataDao.get()?.lastTelemetryClearedAtMillis ?: 0L
             val entities = samples
                 .asSequence()
@@ -484,7 +485,7 @@ class SnapshotHistoryRepository(context: Context) {
                 appUsageHistoryDao.trimTo(APP_USAGE_HISTORY_LIMIT)
             }
             entities.size
-        }
+        })
 
     fun recentAppUsage(
         packageName: String,
@@ -509,14 +510,14 @@ class SnapshotHistoryRepository(context: Context) {
     }
 
     /** Reads all history tables at one SQLite transaction boundary. */
-    fun readHistory(): HistoryReadResult = database.runInTransaction {
+    fun readHistory(): HistoryReadResult = database.runInTransaction(Callable {
         HistoryReadResult(
             snapshots = dao.recent(SNAPSHOT_HISTORY_LIMIT),
             battery = batteryDao.recent(SNAPSHOT_HISTORY_LIMIT),
             network = networkDao.recent(SNAPSHOT_HISTORY_LIMIT),
             actions = actionDao.recent(SNAPSHOT_HISTORY_LIMIT),
         )
-    }
+    })
 
     /**
      * Atomically stores telemetry and its audit entry. If the capture predates a clear that
@@ -529,7 +530,7 @@ class SnapshotHistoryRepository(context: Context) {
         result: String,
         details: String? = null,
         createdAtMillis: Long = capturedAtMillis,
-    ): HistoryWriteResult = database.runInTransaction {
+    ): HistoryWriteResult = database.runInTransaction(Callable {
         val captureId = UUID.randomUUID().toString()
         val writeResult = writeTelemetry(snapshot, capturedAtMillis, captureId)
         if (writeResult.status == HistoryWriteStatus.RECORDED) {
@@ -547,7 +548,7 @@ class SnapshotHistoryRepository(context: Context) {
         } else {
             writeResult
         }
-    }
+    })
 
     fun recordAction(
         action: String,
@@ -575,7 +576,7 @@ class SnapshotHistoryRepository(context: Context) {
      * the return value; this is not a "delete all local history" operation.
      */
     fun clearTelemetryHistory(clearedAtMillis: Long = System.currentTimeMillis()): HistoryClearResult =
-        database.runInTransaction {
+        database.runInTransaction(Callable {
             dao.deleteAll()
             batteryDao.deleteAll()
             networkDao.deleteAll()
@@ -587,11 +588,11 @@ class SnapshotHistoryRepository(context: Context) {
                 clearedAtMillis = effectiveClearTime,
                 actionLogRetained = true,
             )
-        }
+        })
 
     /** Deletes telemetry and audit entries together; no audit row is written for this operation. */
     fun clearAllHistory(clearedAtMillis: Long = System.currentTimeMillis()): HistoryClearResult =
-        database.runInTransaction {
+        database.runInTransaction(Callable {
             dao.deleteAll()
             batteryDao.deleteAll()
             networkDao.deleteAll()
@@ -604,13 +605,13 @@ class SnapshotHistoryRepository(context: Context) {
                 clearedAtMillis = effectiveClearTime,
                 actionLogRetained = false,
             )
-        }
+        })
 
     /** Atomically clears telemetry and records the corresponding audit entry. */
     fun clearTelemetryHistoryWithAction(
         clearedAtMillis: Long = System.currentTimeMillis(),
         details: String? = null,
-    ): HistoryClearResult = database.runInTransaction {
+    ): HistoryClearResult = database.runInTransaction(Callable {
         val result = clearTelemetryHistoryInternal(clearedAtMillis)
         actionDao.insert(
             ActionLogEntity(
@@ -622,7 +623,7 @@ class SnapshotHistoryRepository(context: Context) {
         )
         actionDao.trimTo(SNAPSHOT_HISTORY_LIMIT)
         result
-    }
+    })
 
     private fun writeTelemetry(
         snapshot: DeviceSnapshot,
