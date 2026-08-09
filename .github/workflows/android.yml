@@ -64,6 +64,8 @@ jobs:
         run: |
           RELEASE_APK=app/build/outputs/apk/release/app-release-unsigned.apk
           test -f "$RELEASE_APK"
+          unzip -t "$RELEASE_APK" >/dev/null
+          "$ANDROID_HOME/build-tools/36.0.0/aapt2" dump badging "$RELEASE_APK" >/dev/null
           if "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify "$RELEASE_APK"; then
             echo "The internal minified release validation APK must not be signed in CI."
             exit 1
