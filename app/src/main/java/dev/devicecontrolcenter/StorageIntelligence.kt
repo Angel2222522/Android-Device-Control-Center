@@ -503,7 +503,7 @@ object StorageScanner {
                             true
                         }
                     },
-                ),
+                )
             ) {
                 DocumentChildEnumerationResult.UNREADABLE ->
                     accumulator.recordUnreadableDirectory(pending.uri.toString())
