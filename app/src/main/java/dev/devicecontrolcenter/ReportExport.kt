@@ -330,7 +330,7 @@ object ReportExportWriter {
  * decrypted on another device or after the key is invalidated.
  */
 object EncryptedReportExport {
-    const val FORMAT_DESCRIPTION = "DCCX v1 · AES-GCM · IV 12 bytes · όριο αναφοράς 8 MiB"
+    const val FORMAT_DESCRIPTION = "DCCX v1 · AES-GCM · IV 12 bytes · όριο τελικού αρχείου 8 MiB"
 
     private const val KEYSTORE_PROVIDER = "AndroidKeyStore"
     private const val KEY_ALIAS = "device_control_center_report_v1"
