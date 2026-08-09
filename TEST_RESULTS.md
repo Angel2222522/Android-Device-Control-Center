@@ -80,3 +80,12 @@
 - Build, lint, unit tests, certificate verification and artifact: **PASSED**.
 - Merge commit: `4b9ed5d14b7f5d08f081e924bf8ec20700912c3c`.
 - Corrected physical rendering: **UNVERIFIED**.
+
+## 2026-08-09 — Corrected units physical verification
+
+- Installed PR #6 stable-signed APK over the existing app without uninstalling: **PASSED**.
+- RAM labels: **PASSED** — 4.00 GB (3.73 GiB) advertised physical RAM; 3.53 GiB kernel-accessible; 1.08 GiB available; 0.42 GiB low-memory threshold.
+- Storage labels: **PASSED** — 28.37 GiB available; 101.76 GiB app-data filesystem.
+- Thermal capture: 106% thermal-envelope use and severe thermal restriction; values are dynamic.
+- Screenshot evidence: user-provided and archived in the project evidence folder.
+- GB/GiB presentation milestone: **PHYSICALLY VERIFIED**.
