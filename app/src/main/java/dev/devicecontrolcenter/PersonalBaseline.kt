@@ -123,10 +123,10 @@ object PersonalBaselinePresentation {
 
     fun summary(result: PersonalBaselineResult): String = when (result.state) {
         PersonalBaselineState.INSUFFICIENT_DATA ->
-            "Χρειάζονται τουλάχιστον \${result.minimumSamples} προηγούμενα στιγμιότυπα· βρέθηκαν \${result.referenceSampleCount}."
+            "Χρειάζονται τουλάχιστον ${result.minimumSamples} προηγούμενα στιγμιότυπα· βρέθηκαν ${result.referenceSampleCount}."
 
         PersonalBaselineState.READY ->
-            "Σύγκριση της τρέχουσας λήψης με \${result.referenceSampleCount} προηγούμενα τοπικά στιγμιότυπα."
+            "Σύγκριση της τρέχουσας λήψης με ${result.referenceSampleCount} προηγούμενα τοπικά στιγμιότυπα."
     }
 
     fun relationLabel(relation: PersonalBaselineRelation): String = when (relation) {
@@ -142,14 +142,14 @@ object PersonalBaselinePresentation {
         numericEvidence(metric) { bytes -> SnapshotPresentation.gib(bytes) }
 
     fun lowMemoryEvidence(result: PersonalBaselineResult): String =
-        "Τώρα: \${flagLabel(result.currentIsLowMemory)} · " +
-            "\${result.previousLowMemoryCount}/\${result.referenceSampleCount} προηγούμενα με Android low-memory flag"
+        "Τώρα: ${flagLabel(result.currentIsLowMemory)} · " +
+            "${result.previousLowMemoryCount}/${result.referenceSampleCount} προηγούμενα με Android low-memory flag"
 
     fun thermalEvidence(result: PersonalBaselineResult): String {
         val previous = result.highestPreviousThermalStatus
             ?.let { status -> OverviewPresentation.thermalShortLabel(status) }
             ?: "Μη διαθέσιμη"
-        return "Τώρα: \${OverviewPresentation.thermalShortLabel(result.currentThermalStatus)} · " +
+        return "Τώρα: ${OverviewPresentation.thermalShortLabel(result.currentThermalStatus)} · " +
             "υψηλότερη προηγούμενη: $previous"
     }
 
@@ -160,8 +160,8 @@ object PersonalBaselinePresentation {
         metric: PersonalBaselineNumericMetric,
         formatter: (Long) -> String,
     ): String =
-        "Τώρα \${formatter(metric.currentValue)} · διάμεσος \${formatter(metric.medianValue)} · " +
-            "εύρος \${formatter(metric.minimumValue)}–\${formatter(metric.maximumValue)}"
+        "Τώρα ${formatter(metric.currentValue)} · διάμεσος ${formatter(metric.medianValue)} · " +
+            "εύρος ${formatter(metric.minimumValue)}–${formatter(metric.maximumValue)}"
 
     private fun flagLabel(value: Boolean): String = if (value) "ναι" else "όχι"
 }
