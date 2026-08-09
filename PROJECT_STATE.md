@@ -30,13 +30,13 @@
 
 ## Current gate
 
-Clean installation, telemetry rendering and thermal API semantics are verified. Comparison with Android system information and physical rendering of the corrected wording remain open. The new stable-signed APK must update in place without uninstalling.
+Clean installation, stable-signed in-place updating, telemetry rendering, corrected thermal wording and thermal API semantics are all physically verified. Comparison with Android system information remains open.
 
 ## Verification language
 
 - Matrix `VERIFIED` = feasibility supported by current documentation/reference evidence.
 - Implementation `VERIFIED` requires build + tests + inspected result.
 - Foundation build pipeline and physical launch are VERIFIED.
-- Phase 2 telemetry collection/rendering is PHYSICALLY VERIFIED; corrected thermal presentation is CI-VERIFIED and awaits physical inspection.
+- Phase 2 telemetry collection/rendering is PHYSICALLY VERIFIED; corrected thermal presentation is PHYSICALLY VERIFIED.
 - No diagnosis or optimization action exists yet.
-- Stable debug signing is CI-VERIFIED and clean-install verified; in-place update remains unverified.
+- Stable debug signing, clean installation and subsequent in-place update are PHYSICALLY VERIFIED.
