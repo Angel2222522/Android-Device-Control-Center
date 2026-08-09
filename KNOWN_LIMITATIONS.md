@@ -9,11 +9,11 @@
 - The battery card is a point-in-time snapshot from a sticky broadcast and optional fuel-gauge properties. Vendors may omit, rate-limit or provide noisy current/charge/energy values; this milestone does not create historical drain or health estimates.
 - Voltage is sanity-gated and may fall back to the read-only `power_supply` sysfs `voltage_now` file. Sysfs access is OEM/kernel/SELinux-dependent; when neither source is trustworthy, the app deliberately reports voltage as unavailable.
 - On the verified OPPO target, the Android voltage value was rejected as physically invalid and the sysfs fallback was unavailable; the app therefore has no usable voltage measurement for this device.
-- Diagnosis engine v1 currently evaluates one device snapshot only. It has no historical baseline, sampling window, confidence model, alternative-cause model or cross-domain correlation.
+- Diagnosis engine v1 currently evaluates one device snapshot at a time. Local history now exists, but it is not yet used for a historical baseline, confidence model, alternative-cause model or cross-domain correlation.
 - The memory rule uses only Android's official `lowMemory` flag; it does not infer pressure from an arbitrary available/total ratio or identify a responsible app.
 - The thermal rule reports the current Android status and may include headroom as evidence, but it cannot establish which app, component or workload caused the restriction. Thermal values are dynamic.
 - The battery rule reports a voltage data-quality gap when needed; it does not estimate battery health, true capacity, drain direction or remaining runtime.
-- Diagnosis engine v1 is a current-snapshot slice only. Its CI and target-device behavior are verified, but historical baselines, confidence, alternative-cause analysis and cross-domain correlation remain unimplemented.
+- Diagnosis engine v1 remains a current-snapshot slice. Historical baseline comparison, confidence calibration, alternative-cause analysis and cross-domain correlation remain unimplemented even though local snapshot storage now exists.
 - CPU activity probe v1 is not an Android public system-wide CPU API. It depends on read-only `/proc/stat` access and may be unavailable or vary with the OEM/kernel.
 - A returned CPU activity percentage is a short-window aggregate counter derivation for the whole device; it is not CPU speed, frequency, temperature, app attribution or proof of a performance problem. No CPU diagnosis rule uses it yet.
 - The logical-processor count is runtime-reported context, not a complete CPU topology or performance-core description.
@@ -23,12 +23,12 @@
 - Local VPN firewall occupies Android's single VPN slot and can add battery/latency overhead.
 - Domain attribution is incomplete under encrypted DNS, QUIC, CDNs and shared endpoints.
 - Background execution restrictions prevent silent continuous high-frequency sampling.
-- The overview remains point-in-time telemetry: refresh is user-triggered and snapshots are not persisted as history yet. If a later refresh fails, the app keeps the last successful snapshot; an initial failure requires a retry.
+- Refresh remains user-triggered point-in-time collection with single-flight/throttle protection. Successful snapshots are now persisted locally up to 120 entries; no synchronization, export/delete workflow or historical diagnosis is implemented yet. If a later refresh fails, the app keeps the last successful snapshot; an initial failure requires a retry.
 - CI emulator success cannot prove behavior on the user's physical Android 16/OEM build.
 - Zero-cost GitHub Actions is unlimited on standard runners for public repositories; private repositories have quotas.
 - APKs signed by different certificates cannot update the same Android application ID. CI debug builds therefore require a stable development-only identity; production uses a separate protected key.
 
-- The current overview UI is a functional prototype rather than the accepted final product design. Its uniform large cards, weak hierarchy and prose-heavy presentation are recorded design debt; the premium redesign is implemented and physically verified/accepted as a first baseline on draft PR #11; final polish and merge remain separate follow-up work.
+- The current overview UI is not the final product design. The premium redesign is implemented, physically accepted and merged as a first baseline; additional polish remains deferred design debt.
 
 
 ## 2026-08-09 — Premium overview v1 physical inspection and corrective iteration
@@ -54,3 +54,11 @@
 - The user reviewed the result and accepted it as a good first version, choosing to defer further design refinement to a later phase so functional development can continue.
 - Premium overview design/UX v1 is now **PHYSICALLY VERIFIED and ACCEPTED AS A BASELINE**, not declared final. Future polish remains recorded design debt.
 - The design PR remains stacked on snapshot lifecycle PR #10. The next unfinished gate is PR #10 physical verification of repeated-tap protection and failure-state preservation; the design milestone must not be described as the final product design.
+
+## 2026-08-09 — Device Intelligence v1 limitations
+
+- Room history contains selected snapshot fields only, is capped at 120 successful entries and has no baseline/anomaly analysis, export/delete UI or cross-device synchronization.
+- SAF scanning is provider-dependent, read-only and metadata-only. A scan can encounter unknown sizes, unreadable directories or the 20,000-entry safety limit.
+- Shared-storage scanning requires explicit `MANAGE_EXTERNAL_STORAGE` special access and remains limited to readable shared-storage volumes; it is not root and does not expose other applications' private directories.
+- Same-size groups are candidates only. The milestone does not hash file contents, confirm duplicates, delete files or move files.
+- The user confirmed the merged milestone on the OPPO A60 5G; these boundaries remain product limitations rather than hidden capabilities.
