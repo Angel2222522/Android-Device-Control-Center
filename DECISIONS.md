@@ -132,3 +132,16 @@
 - **Decision:** Accept the current premium overview as a physically verified first baseline and continue functional development. Defer additional visual refinement to a later design phase.
 - **Why:** The physical target now shows a coherent, readable and substantially improved experience. Further polish should not block the next evidence-based capability milestone.
 - **Boundary:** This is not a claim that the visual language is final. Future refinement may revisit hierarchy, motion, iconography, density and deeper interaction quality without weakening truthful unavailable states.
+
+## D-022 — Canonical trunk and vertical evidence gates
+
+- **Decision:** Maintain one canonical `main`, one active milestone/PR after stack reconciliation, one candidate APK per substantial milestone, and a complete gate of code → tests/lint → Actions → artifact integrity → physical device verification → user acceptance → merge → documentation checkpoint.
+- **Why:** The previous stacked continuation model created stale heads, repeated context loading and ambiguous verification boundaries. A single evidence-gated trunk reduces drift and preserves the user's zero-cost Android/GitHub workflow.
+- **Boundary:** No milestone is called `VERIFIED` from compilation or CI alone; physical evidence and truthful unavailable states remain mandatory.
+
+## D-023 — Local history and bounded storage intelligence
+
+- **Decision:** Persist only successful snapshots locally in Room, cap retention at 120 entries, and present the data as device-local with no synchronization or upload.
+- **Decision:** Storage intelligence is read-only metadata analysis. SAF folder selection is the default privacy-preserving path; shared-storage scanning requires an explicit user-triggered Android special-access flow.
+- **Rejected:** Content hashing, automatic deletion or movement, background scanning, automatic permission requests and calling same-size groups confirmed duplicates.
+- **Boundary:** `MANAGE_EXTERNAL_STORAGE` is not root and does not grant access to other applications' private directories.
