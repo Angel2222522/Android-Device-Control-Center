@@ -2,7 +2,7 @@
 
 **Updated:** 2026-08-09  
 **Phase:** 2 — capability and permission center  
-**Production code:** real device and battery snapshot collectors; diagnosis engine not started
+**Production code:** real device and battery snapshot collectors; first deterministic diagnosis-engine slice implemented on the current checkpoint branch
 
 ## Completed
 
@@ -22,6 +22,14 @@
 - Thermal wording corrected in PR #4 and CI-verified in run `31313577829`; merged as `0be0590673d079eb761fc56a288d915059282b91`.
 - Factual battery snapshot implemented in PR #7. It uses the standard Android battery broadcast plus optional `BatteryManager` properties, with explicit unavailable states and no health/optimisation claims. The target's invalid voltage was rejected correctly in the second physical inspection; the truthful battery snapshot milestone is now physically verified, with voltage unavailable on this device.
 - PR #7 was merged as `76eb50e29dee6cb72310c47416961d9b601d9bad`; `main` now contains the physically verified battery milestone.
+
+## Current milestone — Diagnosis engine v1 implementation checkpoint
+
+- Implemented a small deterministic, current-snapshot diagnosis engine with versioned rule IDs, finding type, severity, evidence and explicit limitations.
+- The first slice evaluates only Android's official low-memory flag, current thermal status and battery-voltage data quality.
+- It deliberately has no score, no arbitrary memory ratio, no app-level causal attribution, no battery-health estimate, no history/baseline and no automatic action.
+- Unit coverage was added for stable state, low-memory state, severe/critical thermal states, data-quality findings and stable ordering.
+- CI, APK inspection and target-phone physical verification are still pending for this slice.
 
 ## Physical Phase 2 observations
 
@@ -43,6 +51,8 @@ The corrected checkpoint is commit `fff926687aeec0b4c2e7058c3efe80060a6e0eb`, CI
 
 The merge commit is `76eb50e29dee6cb72310c47416961d9b601d9bad`; current `main` was checked directly after merge. The successful validation run remains `31316180145`.
 
+The first unfinished product point is now the diagnosis-engine v1 checkpoint described above. The implementation is on the dedicated diagnosis branch; it must pass GitHub Actions and then be inspected on the target phone before it can be called verified or merged.
+
 ## Verification language
 
 - Matrix `VERIFIED` = feasibility supported by current documentation/reference evidence.
@@ -50,5 +60,6 @@ The merge commit is `76eb50e29dee6cb72310c47416961d9b601d9bad`; current `main` w
 - Foundation build pipeline and physical launch are VERIFIED.
 - Phase 2 telemetry collection/rendering is PHYSICALLY VERIFIED; corrected thermal presentation is PHYSICALLY VERIFIED.
 - Battery snapshot implementation and truthful unavailable-voltage handling are PHYSICALLY VERIFIED. A usable voltage measurement is NOT AVAILABLE on this target; the rejected vendor value is not presented as a measurement.
-- No diagnosis or optimization action exists yet.
+- The diagnosis-engine v1 implementation exists on the checkpoint branch but is NOT VERIFIED until CI, APK inspection and target-device inspection pass.
+- No optimization action exists, and the diagnosis engine executes no action automatically.
 - Stable debug signing, clean installation and subsequent in-place update are PHYSICALLY VERIFIED.

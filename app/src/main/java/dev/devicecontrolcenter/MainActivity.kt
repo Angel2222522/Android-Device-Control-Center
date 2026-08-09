@@ -37,6 +37,8 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun CapabilityScreen(snapshot: DeviceSnapshot) {
+    val diagnosis = remember(snapshot) { DeviceDiagnosisEngine.analyze(snapshot) }
+
     Scaffold(modifier = Modifier.fillMaxSize()) { contentPadding ->
         Column(
             modifier = Modifier
@@ -50,9 +52,10 @@ private fun CapabilityScreen(snapshot: DeviceSnapshot) {
                 style = MaterialTheme.typography.headlineLarge,
             )
             Text(
-                text = "Πραγματικό στιγμιότυπο από τα δημόσια API του Android. Δεν αποτελεί ακόμη διάγνωση.",
+                text = "Πραγματικό στιγμιότυπο από τα δημόσια API του Android. Η πρώτη διάγνωση αξιολογεί μόνο τα σήματα που αναφέρονται παρακάτω.",
                 style = MaterialTheme.typography.bodyLarge,
             )
+            DiagnosisCard(report = diagnosis)
             MetricCard(
                 title = "Μνήμη RAM",
                 primary = "${SnapshotPresentation.gib(snapshot.availableMemoryBytes)} διαθέσιμα",
@@ -89,6 +92,57 @@ private fun CapabilityScreen(snapshot: DeviceSnapshot) {
                 status = "Η εφαρμογή δεν ζητά πρόσβαση αυτόματα",
             )
         }
+    }
+}
+
+@Composable
+private fun DiagnosisCard(report: DiagnosisReport) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFF1EDF4), RoundedCornerShape(20.dp))
+            .padding(18.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(text = "Πρώτη διάγνωση", style = MaterialTheme.typography.titleMedium)
+        Text(
+            text = DiagnosisPresentation.headline(report),
+            style = MaterialTheme.typography.headlineSmall,
+        )
+        Text(
+            text = DiagnosisPresentation.evaluatedLabel(report),
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        report.findings.forEach { finding ->
+            Text(
+                text = DiagnosisPresentation.severityLabel(finding.severity),
+                style = MaterialTheme.typography.labelLarge,
+                color = Color(0xFF5B5361),
+            )
+            Text(text = finding.title, style = MaterialTheme.typography.titleMedium)
+            Text(text = finding.explanation, style = MaterialTheme.typography.bodyMedium)
+            Text(
+                text = "Τεκμήριο: ${finding.evidence}",
+                style = MaterialTheme.typography.bodySmall,
+            )
+            finding.limitation?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF5B5361),
+                )
+            }
+            Text(
+                text = "Κανόνας ${finding.ruleId} · έκδοση ${finding.ruleVersion}",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color(0xFF5B5361),
+            )
+        }
+        Text(
+            text = "Δεν εκτελείται καμία ενέργεια αυτόματα",
+            style = MaterialTheme.typography.labelLarge,
+            color = Color(0xFF5B5361),
+        )
     }
 }
 

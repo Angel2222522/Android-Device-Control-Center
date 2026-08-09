@@ -135,3 +135,12 @@
 - PR #7 merged successfully: `76eb50e29dee6cb72310c47416961d9b601d9bad`.
 - Direct repository check after merge: `main` points to `76eb50e29dee6cb72310c47416961d9b601d9bad`.
 - The code-validation CI evidence remains run `31316180145`, which passed lint, tests, Android 16 build, signing verification and artifact upload. No separate workflow run was returned for the merge commit by the repository's pull-request workflow query.
+
+## 2026-08-09 — Diagnosis engine v1 implementation checkpoint
+
+- Official API semantics checked before implementation against Android `ActivityManager.MemoryInfo` and `PowerManager` documentation: **VERIFIED**.
+- Implemented three deterministic current-snapshot rules: official `lowMemory` state, current thermal status and battery-voltage data quality.
+- Findings include rule ID/version, condition or data-quality type, product severity, raw-derived evidence and limitations. The report has no generic score and performs no action.
+- Unit tests were added for stable state, low-memory warning, severe/critical thermal states, battery data-quality reporting and deterministic ordering.
+- Local Gradle execution: **NOT RUN** in the inspection workspace; GitHub Actions remains the build/test gate.
+- Diagnosis engine v1 implementation, CI, APK inspection and target-phone physical verification: **NOT VERIFIED / PENDING**.

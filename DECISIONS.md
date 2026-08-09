@@ -90,6 +90,13 @@
 - **Why:** The target OPPO returned `3 mV (0.003 V)` for a live phone. The official Android/AOSP contract describes the broadcast voltage as mV and the standard power-supply voltage file as μV, but the target's observed value violates the expected physical range. Truthful unavailability is safer than a plausible-looking fabricated conversion.
 - **Physical result:** The corrected APK rejected the target value and displayed an explicit unavailable state. This handling is verified; a usable voltage measurement is not available on the target device.
 
+## D-017 — First diagnosis-engine slice is current-snapshot and evidence-first
+
+- **Decision:** Start diagnosis v1 with three deterministic rules: Android's `MemoryInfo.lowMemory` flag, `PowerManager.currentThermalStatus`, and battery-voltage data quality. Every finding carries a rule ID/version, type, severity, evidence and limitation.
+- **Severity policy:** Light/moderate thermal restriction is informational, severe is a warning, and critical/emergency/shutdown is critical. Android's status remains the source signal; this mapping is product presentation, not a claim of app causality.
+- **Rejected:** Arbitrary available/total-memory ratios, universal health or optimisation scores, per-app causal claims, history-dependent conclusions and automatic actions in this first slice.
+- **Why:** The official public APIs provide trustworthy current signals, while ratios, attribution and health require additional evidence, baselines and device-specific validation. A narrow explainable slice can be tested and physically inspected without pretending to be a complete diagnosis system.
+
 ## Open product decisions
 
 - SAF/MediaStore-first versus broad All Files Access posture.

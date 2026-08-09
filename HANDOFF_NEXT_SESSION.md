@@ -24,6 +24,10 @@
 22. Corrected commit `fff926687aeec0b4c2e7058c3efe80060a6e0eb` passed CI run `31316180145`; artifact `9038822328`; extracted APK SHA-256 `f8e87d4e2681c2bb329df814b32b2c61bd779b08275a210a39f6af043e8231c`.
 23. PR #7 was marked ready and merged as `76eb50e29dee6cb72310c47416961d9b601d9bad`. Direct repository inspection confirmed that `main` now points to this merge commit. The successful code-validation run remains `31316180145`.
 
-**Current production code:** real RAM/thermal/storage/access snapshot plus a factual battery snapshot; no diagnosis engine.
+24. The first diagnosis-engine v1 implementation checkpoint is on branch `feature/diagnosis-engine-v1`. It evaluates only the Android low-memory flag, current thermal status and battery-voltage data quality.
+25. Findings are versioned and explainable: rule ID/version, condition or data-quality type, severity, evidence and explicit limitations. No score, memory ratio, health claim, app attribution, history/baseline or automatic action was added.
+26. Unit coverage was added for stable state, low-memory warning, severe/critical thermal states, battery data-quality reporting and deterministic ordering. GitHub Actions and APK inspection are pending.
+
+**Current production code:** real RAM/thermal/storage/access snapshot plus a factual battery snapshot; diagnosis-engine v1 implementation exists on the checkpoint branch but is not yet verified or merged.
 **Verified:** CI, stable certificate, clean install, in-place updates, previous telemetry rendering, factual battery snapshot and truthful rejection of the target's invalid voltage.
-**First unfinished point:** begin the first diagnosis-engine slice. Do not treat battery voltage as available on the OPPO target, and do not add health/capacity claims.
+**First unfinished point:** run CI for `feature/diagnosis-engine-v1`, then produce one milestone APK for installation and physical inspection. Do not treat battery voltage as available on the OPPO target, and do not add health/capacity claims.
