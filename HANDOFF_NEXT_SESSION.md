@@ -56,10 +56,10 @@
 50. GitHub Actions run 31321637219 passed lint, unit tests, Android 16 build, stable certificate verification and artifact upload. Artifact 9040353819; complete APK SHA-256 f795026281bdf57a1c1cddb9a943930a8c3e3c50a125376da5f03c5888fb7024.
 51. ZIP/APK integrity checks passed. The candidate APK is ready for physical visual inspection, but design acceptance remains pending until the OPPO A60 5G is inspected and the result is reviewed.
 
-**Current production code:** real RAM/thermal/storage/access snapshot, factual battery snapshot, diagnosis-engine v1 and CPU activity probe v1 are present on `main`. Numeric device-level CPU activity is unavailable on the target.
+**Current production code:** real RAM/thermal/storage/access snapshot, factual battery snapshot, diagnosis-engine v1, CPU activity probe v1, snapshot lifecycle v1, accepted premium overview v1 baseline, Room local history and bounded read-only storage intelligence are present on `main`. Numeric device-level CPU activity and usable battery voltage are unavailable on the target.
 **Verified:** diagnosis-engine v1 CI and target inspection, CPU probe CI, complete artifact integrity, stable certificate, clean install/in-place updates, previous telemetry rendering, factual battery snapshot and truthful rejection of the target's invalid voltage.
-**Current checkpoint:** PR #10 is CI-VERIFIED but not physically verified or merged. Main remains unchanged at `b550b2a5d69de343b94df595b351668b73786511`.
-**First unfinished point:** install the complete candidate APK from artifact 9040353819 on the OPPO A60 5G and visually inspect the first viewport, scrolling, refresh feedback, warning/unavailable states, diagnosis disclosure and technical-detail readability. Then update PR #11 and all state documents from observed evidence. Do not call the design VERIFIED or merge it before physical inspection.
+**Current checkpoint:** PR10, PR11 and PR12 are physically accepted and merged. The merged code head is `815a8fb136ea0d666b83e169743f3768d85d062a` before the documentation checkpoint.
+**First unfinished point:** define the bounded personal-baseline v1 contract from the now-local snapshot history. Do not begin implementation until the minimum-sample rule, insufficient-data state and evidence wording are fixed in the state documents.
 
 
 ## 2026-08-09 — Premium overview v1 physical inspection and corrective iteration
@@ -85,3 +85,11 @@
 - The user reviewed the result and accepted it as a good first version, choosing to defer further design refinement to a later phase so functional development can continue.
 - Premium overview design/UX v1 is now **PHYSICALLY VERIFIED and ACCEPTED AS A BASELINE**, not declared final. Future polish remains recorded design debt.
 - The design PR remains stacked on snapshot lifecycle PR #10. The next unfinished gate is PR #10 physical verification of repeated-tap protection and failure-state preservation; the design milestone must not be described as the final product design.
+
+## 2026-08-09 — Canonical merged checkpoint
+
+- PR10 `4b914cf0e41cbf15999a9c380dcad10dcbb6eac3`, PR11 `b1710e2ad30a27eac9e4b60590acc11159298921` and PR12 `815a8fb136ea0d666b83e169743f3768d85d062a` are merged into the canonical `main`.
+- PR12 CI run `31325270001` passed with 37 tests and 0 failures, 0 lint errors and 12 warnings. Artifact/APK hashes match the recorded values.
+- The user confirmed the complete physical gate on the OPPO A60 5G. The repository must not claim numeric CPU activity or usable battery voltage on this device.
+- Storage intelligence is metadata-only and read-only. SAF remains the privacy-preserving default path; `MANAGE_EXTERNAL_STORAGE` is optional, explicit and limited to shared storage rather than private app directories.
+- Next bounded milestone proposal: personal-baseline v1 using existing local history, with insufficient-data handling and no score or automatic action.
