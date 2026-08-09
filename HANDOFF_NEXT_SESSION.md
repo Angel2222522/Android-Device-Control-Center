@@ -1,16 +1,16 @@
 # Handoff — Next Session
 
-1. Read `PROJECT_STATE.md`, `DECISIONS.md`, `FEATURE_MATRIX.md`, `TEST_RESULTS.md`, `KNOWN_LIMITATIONS.md`, `TODO.md` and `PHASE_0_RESEARCH.md`.
-2. Inspect actual repository branch/HEAD if a repository has since been created.
-3. Verify repository `Angel2222522/Android-Device-Control-Center`, branch `main`, current HEAD.
-4. Foundation verification passed on commit `5ef4d48de24a29626664a2b9b14765b7ba3ce5fc`, run `31311726075`.
-5. Physical Android 16 installation and launch passed with screenshot evidence.
-6. Phase 2 PR #1 passed CI and merged as `0ddf03c2d9b2f08c364b791ad91eb1d8df3d24e9`.
-7. The first Phase 2 update failed because Phase 1 and Phase 2 were signed by different ephemeral runner debug keys.
-8. Stable debug signing passed two independent CI builds and explicit certificate verification; merged as `e1d78cea001f0da8769ccf2db70eb6296407ec20`.
-9. User must uninstall the old ephemeral-signed APK once, install the stable-signed build, then verify a subsequent in-place update.
-10. Inspect every displayed value on the target phone; do not start diagnosis rules until telemetry is physically verified.
+1. Read all project-state documents and inspect repository `Angel2222522/Android-Device-Control-Center`, branch `main`, current HEAD.
+2. Phase 1 foundation passed CI and physical Android 16 installation/launch.
+3. Phase 2 PR #1 passed CI and merged as `0ddf03c2d9b2f08c364b791ad91eb1d8df3d24e9`.
+4. The first update failed because separate CI runners used different ephemeral debug certificates.
+5. Stable signing passed two independent CI builds and explicit certificate verification; PR #3 merged as `e1d78cea001f0da8769ccf2db70eb6296407ec20`.
+6. User removed the old build once, clean-installed the stable-signed Phase 2 APK and supplied screenshots confirming successful launch and real telemetry rendering.
+7. Physical observations: RAM 3.53 GB total / 1.13 GB available / 0.42 GB low threshold / low flag false; storage 101.76 GB total / 28.54 GB available; thermal headroom 1.02 with “serious” label; special accesses not granted.
+8. Do not treat thermal interpretation as correct until official semantics and device behavior are checked.
+9. Compare values with Android system information.
+10. Produce a subsequent stable-signed checkpoint and verify it installs over the current app without uninstalling.
 
 **Current production code:** real RAM/thermal/storage/access snapshot; no diagnosis engine.  
-**Current build/test evidence:** Phase 1 physical launch passed; Phase 2 lint/tests/assembly passed.  
-**First unfinished point:** CI-verify stable debug signing, then clean-install it once.
+**Verified:** CI, stable certificate, clean install, launch and telemetry rendering.  
+**First unfinished point:** validate displayed telemetry semantics, especially thermal status/headroom.
