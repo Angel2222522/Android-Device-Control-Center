@@ -319,6 +319,16 @@ object ReportExportWriter {
     }
 }
 
+/** Clears the private hand-off only after the destination writer returns successfully. */
+internal fun <T> writeThenClearPendingReport(
+    write: () -> T,
+    clearPending: () -> Unit,
+): T {
+    val result = write()
+    clearPending()
+    return result
+}
+
 /**
  * Encrypts an exported report for local use with a key held by Android Keystore.
  *
