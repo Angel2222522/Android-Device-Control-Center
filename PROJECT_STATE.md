@@ -19,10 +19,11 @@
 - Phase 2 collector implemented for RAM totals/threshold/low-memory flag, thermal status/headroom, storage totals, Usage Access and All Files Access state.
 - Pull request #1 passed lint, unit tests and debug assembly, then merged to `main` as `0ddf03c2d9b2f08c364b791ad91eb1d8df3d24e9`.
 - Agreed product scope consolidated in `PROJECT_SCOPE.md`.
+- Physical update from Phase 1 to Phase 2 failed because separate CI runners produced different ephemeral debug signatures.
 
 ## Current gate
 
-Phase 2 code and CI are verified. APK `Device-Control-Center-capabilities-debug.apk` is ready. The current gate is physical-device verification of displayed RAM, thermal, storage and access states.
+Phase 2 code and CI are verified, but the first physical update exposed unstable debug signing. A stable development-only signing identity is being added. One uninstall of the old ephemeral-signed APK will be required; future debug updates must install in place.
 
 ## Verification language
 
@@ -31,3 +32,4 @@ Phase 2 code and CI are verified. APK `Device-Control-Center-capabilities-debug.
 - Foundation build pipeline and physical launch are VERIFIED.
 - Phase 2 collector is CI-VERIFIED but remains PHYSICALLY UNVERIFIED.
 - No diagnosis or optimization action exists yet.
+- Stable debug-signing fix is IMPLEMENTED LOCALLY but UNVERIFIED until CI and two consecutive install/update checks pass.
