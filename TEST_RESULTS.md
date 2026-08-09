@@ -189,3 +189,11 @@
 - This is the truthful target capability result, not a crash and not permission denial caused by the app. No CPU percentage was fabricated.
 - Physical snapshot evidence included 53% battery, 37.1 °C, 973 μA raw current, 2,507 mAh charge counter, 1.13 GiB available RAM, light thermal restriction (status code 1) and 94% thermal-envelope use. These values are dynamic.
 - Physical verification of CPU activity probe v1: **PASSED for truthful unavailable-state behavior**. Numeric device-level CPU activity on this target: **NOT AVAILABLE**.
+
+
+## 2026-08-09 — CPU activity probe v1 merge
+
+- PR #9 was marked ready after physical verification and merged successfully.
+- Merge commit: `679aec0a530d6c8c38742a827d273cd35d359596`.
+- Direct repository inspection confirmed that `main` contains the CPU probe milestone.
+- CPU probe v1 is now **CI-VERIFIED, PHYSICALLY VERIFIED AND MERGED** for truthful unavailable-state behavior. Numeric CPU activity remains unavailable on the target device.

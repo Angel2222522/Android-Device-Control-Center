@@ -2,7 +2,7 @@
 
 **Updated:** 2026-08-09  
 **Phase:** 2 — capability and permission center  
-**Production code:** real device/battery snapshot collectors, diagnosis-engine v1 and CPU activity probe v1 implementation on the current checkpoint branch
+**Production code:** real device/battery snapshot collectors, diagnosis-engine v1 and CPU activity probe v1 on `main`; the target has no numeric device-level CPU activity source
 
 ## Completed
 
@@ -36,7 +36,7 @@
 - Physical screenshot evidence showed `lowMemory=false`, current thermal status without restriction, and the target's voltage remaining unavailable/rejected as untrusted. The displayed RAM, battery and storage values were treated as dynamic snapshot values.
 - Diagnosis engine v1 is now PHYSICALLY VERIFIED on the target. PR #8 was merged as `d55decfa4d09ee2d662588695eaaa029a50e5583`, and `main` now contains the milestone.
 
-## Current milestone — CPU activity probe v1 implementation checkpoint
+## Completed milestone — CPU activity probe v1
 
 - Added a read-only, capability-probed device-level CPU activity collector using two `/proc/stat` counter samples over a 250 ms window.
 - Collection runs off the Compose/UI thread. If procfs is unavailable, malformed or restricted by the OEM/kernel, the snapshot remains explicitly unavailable.
@@ -48,6 +48,7 @@
 - The complete APK was installed over the existing stable-signed app on the OPPO A60 5G (Android/ColorOS 16.0.5) and launched successfully.
 - The CPU card rendered the explicit unavailable state because read-only `/proc/stat` was unavailable or did not return a valid sample. No fabricated CPU percentage was shown. This is a physically verified capability limitation, not an application failure.
 - Static APK inspection, installation, launch and CPU-card inspection are complete for this slice; a numeric CPU activity value is not available on this target.
+- PR #9 was physically verified and merged as `679aec0a530d6c8c38742a827d273cd35d359596`; direct repository inspection confirmed that `main` contains the CPU probe milestone.
 
 ## Physical Phase 2 observations
 
@@ -71,7 +72,7 @@ The merge commit is `76eb50e29dee6cb72310c47416961d9b601d9bad`; current `main` w
 
 The diagnosis-engine v1 implementation has passed CI and physical inspection on the target phone. PR #8 was merged as `d55decfa4d09ee2d662588695eaaa029a50e5583`; direct `main` inspection confirmed that this is the current HEAD.
 
-The next bounded milestone is CPU activity probe v1. It is deliberately a collector/capability slice, not a CPU diagnosis claim. It must pass CI and target inspection before the source is treated as usable on the OPPO device.
+The CPU probe milestone is deliberately a collector/capability slice, not a CPU diagnosis claim. It is merged because the target behavior is truthful and physically verified. The next bounded slice must be selected from the merged `main` state; numeric CPU activity must remain unavailable on this target.
 
 ## Verification language
 

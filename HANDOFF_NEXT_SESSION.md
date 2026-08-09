@@ -37,8 +37,8 @@
 34. The first local APK handoff was truncated at 16,711,680 bytes and could not be opened. The original artifact ZIP was intact; a complete 27,096,030-byte APK was re-extracted and passed archive integrity testing. Do not use the truncated file as evidence.
 35. The complete APK was installed over the current stable-signed app on the OPPO A60 5G (Android/ColorOS 16.0.5) and launched successfully.
 36. The CPU card showed `Μη διαθέσιμη δραστηριότητα CPU` because read-only `/proc/stat` was unavailable or invalid on the target. This is the verified truthful fallback; no numeric CPU claim may be added for this device.
-37. Physical evidence also showed the expected dynamic battery, RAM, storage, thermal and diagnosis cards. PR #9 is now ready for merge after a final repository check.
+37. Physical evidence also showed the expected dynamic battery, RAM, storage, thermal and diagnosis cards. PR #9 was marked ready and merged as `679aec0a530d6c8c38742a827d273cd35d359596`.
 
-**Current production code:** real RAM/thermal/storage/access snapshot plus a factual battery snapshot and diagnosis-engine v1 on `main`; CPU activity probe v1 is physically verified on the checkpoint branch and awaits merge.
+**Current production code:** real RAM/thermal/storage/access snapshot, factual battery snapshot, diagnosis-engine v1 and CPU activity probe v1 are present on `main`. Numeric device-level CPU activity is unavailable on the target.
 **Verified:** diagnosis-engine v1 CI and target inspection, CPU probe CI, complete artifact integrity, stable certificate, clean install/in-place updates, previous telemetry rendering, factual battery snapshot and truthful rejection of the target's invalid voltage.
-**First unfinished point:** verify PR #9 head and documentation, mark it ready and merge it. Then choose the next small unfinished product slice from the merged state. Preserve the target limitation: battery voltage and numeric CPU activity are unavailable on this device; do not infer either.
+**First unfinished point:** read all state documents and the merged `main`, then select one small, evidence-backed next milestone. Do not infer battery voltage or numeric CPU activity; do not begin a broad implementation.

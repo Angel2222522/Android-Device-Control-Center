@@ -60,7 +60,7 @@
 - [x] Verify the artifact ZIP and re-extract a complete APK after the first handoff file was found truncated.
 - [x] Install the complete milestone APK over the current stable-signed app and inspect the CPU card.
 - [x] Physically verify the target's explicit `/proc/stat` unavailable state; do not fabricate a numeric CPU percentage.
-- [ ] Mark PR #9 ready and merge the verified CPU activity probe checkpoint.
+- [x] Mark PR #9 ready and merge the verified CPU activity probe checkpoint.
 
 ## Phase 2 — Battery factual snapshot
 
