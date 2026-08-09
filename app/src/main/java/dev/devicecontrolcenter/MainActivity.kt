@@ -22,7 +22,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -63,8 +62,8 @@ private fun CapabilityScreen(snapshot: DeviceSnapshot) {
             MetricCard(
                 title = "Επεξεργαστής και θερμοκρασία",
                 primary = SnapshotPresentation.thermalLabel(snapshot.thermalStatus),
-                detail = snapshot.thermalHeadroom?.let { "Θερμικό περιθώριο: %.2f".format(Locale.ROOT, it) }
-                    ?: "Η συσκευή δεν επέστρεψε θερμικό περιθώριο τώρα",
+                detail = snapshot.thermalHeadroom?.let(SnapshotPresentation::thermalEnvelopeLabel)
+                    ?: "Η συσκευή δεν επέστρεψε μέτρηση θερμικού ορίου τώρα",
                 status = "Δεν γίνεται ακόμη απόδοση αιτίας σε εφαρμογή",
             )
             MetricCard(
