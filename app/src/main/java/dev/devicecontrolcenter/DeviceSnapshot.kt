@@ -60,14 +60,20 @@ object SnapshotPresentation {
 
     fun thermalLabel(status: Int): String = when (status) {
         PowerManager.THERMAL_STATUS_NONE -> "Χωρίς θερμικό περιορισμό"
-        PowerManager.THERMAL_STATUS_LIGHT -> "Ελαφριά θερμική επιβάρυνση"
-        PowerManager.THERMAL_STATUS_MODERATE -> "Μέτρια θερμική επιβάρυνση"
-        PowerManager.THERMAL_STATUS_SEVERE -> "Σοβαρή θερμική επιβάρυνση"
-        PowerManager.THERMAL_STATUS_CRITICAL -> "Κρίσιμη θερμική επιβάρυνση"
+        PowerManager.THERMAL_STATUS_LIGHT -> "Ελαφρύς θερμικός περιορισμός"
+        PowerManager.THERMAL_STATUS_MODERATE -> "Μέτριος θερμικός περιορισμός"
+        PowerManager.THERMAL_STATUS_SEVERE -> "Σοβαρός θερμικός περιορισμός"
+        PowerManager.THERMAL_STATUS_CRITICAL -> "Κρίσιμος θερμικός περιορισμός"
         PowerManager.THERMAL_STATUS_EMERGENCY -> "Θερμική κατάσταση έκτακτης ανάγκης"
         PowerManager.THERMAL_STATUS_SHUTDOWN -> "Επικείμενος θερμικός τερματισμός"
         else -> "Άγνωστη θερμική κατάσταση"
     }
+
+    fun thermalEnvelopeLabel(headroom: Float): String = String.format(
+        Locale.ROOT,
+        "Χρήση θερμικού ορίου: %.0f%% · Το 100%% είναι το κατώφλι σοβαρού περιορισμού",
+        headroom * 100,
+    )
 
     fun accessLabel(granted: Boolean): String = if (granted) "Ενεργή" else "Δεν έχει δοθεί"
 }
