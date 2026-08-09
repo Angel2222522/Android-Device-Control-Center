@@ -451,6 +451,13 @@ private fun CapabilityScreen(
 ) {
     val diagnosis = remember(snapshot) { DeviceDiagnosisEngine.analyze(snapshot) }
     val overviewStatus = OverviewPresentation.status(diagnosis)
+    val personalBaseline = remember(snapshot, historyState.entries, state.capturedAtMillis) {
+        PersonalBaseline.evaluate(
+            current = snapshot,
+            currentCapturedAtMillis = state.capturedAtMillis,
+            history = historyState.entries,
+        )
+    }
 
     Scaffold(containerColor = MaterialTheme.colorScheme.background) { contentPadding ->
         LazyColumn(
@@ -471,6 +478,12 @@ private fun CapabilityScreen(
             }
             item {
                 HistoryCard(state = historyState)
+            }
+            item {
+                PersonalBaselineCard(
+                    result = personalBaseline,
+                    historyState = historyState,
+                )
             }
             item {
                 SectionHeading(
@@ -754,6 +767,152 @@ private fun HistoryCard(state: HistoryUiState) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+    }
+}
+
+@Composable
+private fun PersonalBaselineCard(
+    result: PersonalBaselineResult,
+    historyState: HistoryUiState,
+) {
+    val tone = when {
+        historyState.errorMessage != null -> OverviewTone.UNAVAILABLE
+        result.state == PersonalBaselineState.INSUFFICIENT_DATA -> OverviewTone.UNAVAILABLE
+        else -> OverviewTone.INFO
+    }
+    val badge = when {
+        historyState.errorMessage != null -> "Μη διαθέσιμο"
+        else -> PersonalBaselinePresentation.statusLabel(result.state)
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = toneContainer(tone)),
+        shape = RoundedCornerShape(22.dp),
+        border = BorderStroke(1.dp, toneAccent(tone).copy(alpha = 0.28f)),
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(9.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top,
+            ) {
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(text = "Προσωπική αναφορά", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        text = "Σύγκριση με προηγούμενες λήψεις της ίδιας συσκευής",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                StatusBadge(text = badge, tone = tone)
+            }
+
+            when {
+                historyState.errorMessage != null -> {
+                    Text(
+                        text = historyState.errorMessage,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+
+                historyState.isLoading && historyState.entries.isEmpty() -> {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(9.dp),
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                        Text(text = "Φόρτωση προηγούμενων λήψεων…", style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+
+                result.state == PersonalBaselineState.INSUFFICIENT_DATA -> {
+                    Text(
+                        text = PersonalBaselinePresentation.summary(result),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Text(
+                        text = "Η σύγκριση ενεργοποιείται μόνο με επιτυχείς προηγούμενες λήψεις. Η τρέχουσα λήψη δεν μετράει ως προηγούμενο δείγμα.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                else -> {
+                    Text(
+                        text = PersonalBaselinePresentation.summary(result),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    result.availableMemory?.let { metric ->
+                        PersonalBaselineMetricRow(
+                            title = "Διαθέσιμη RAM",
+                            metric = metric,
+                            evidence = PersonalBaselinePresentation.memoryEvidence(metric),
+                        )
+                    }
+                    result.availableStorage?.let { metric ->
+                        PersonalBaselineMetricRow(
+                            title = "Διαθέσιμος χώρος δεδομένων",
+                            metric = metric,
+                            evidence = PersonalBaselinePresentation.storageEvidence(metric),
+                        )
+                    }
+                    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Text(
+                            text = "Σήματα πλαισίου",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Text(
+                            text = PersonalBaselinePresentation.lowMemoryEvidence(result),
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                        Text(
+                            text = PersonalBaselinePresentation.thermalEvidence(result),
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                }
+            }
+
+            Text(
+                text = PersonalBaselinePresentation.limitation(),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun PersonalBaselineMetricRow(
+    title: String,
+    metric: PersonalBaselineNumericMetric,
+    evidence: String,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(text = title, style = MaterialTheme.typography.labelLarge)
+            Text(
+                text = PersonalBaselinePresentation.relationLabel(metric.relation),
+                style = MaterialTheme.typography.labelSmall,
+                color = toneAccent(OverviewTone.INFO),
+            )
+        }
+        Text(text = evidence, style = MaterialTheme.typography.bodySmall)
     }
 }
 
