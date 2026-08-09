@@ -44,6 +44,12 @@ jobs:
       - name: Verify debug build
         run: gradle --no-daemon lintDebug testDebugUnitTest assembleDebug
 
+      - name: Verify stable debug certificate
+        run: |
+          CERTS=$("$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs app/build/outputs/apk/debug/app-debug.apk)
+          echo "$CERTS"
+          echo "$CERTS" | grep -F "Signer #1 certificate SHA-256 digest: f805690fd2b6a9e925d6da491fbbb2839df7df581db580f58eb7f26742804c7a"
+
       - name: Upload APK and reports
         if: always()
         uses: actions/upload-artifact@v4
