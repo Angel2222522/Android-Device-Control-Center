@@ -39,6 +39,18 @@
 36. The CPU card showed `Μη διαθέσιμη δραστηριότητα CPU` because read-only `/proc/stat` was unavailable or invalid on the target. This is the verified truthful fallback; no numeric CPU claim may be added for this device.
 37. Physical evidence also showed the expected dynamic battery, RAM, storage, thermal and diagnosis cards. PR #9 was marked ready and merged as `679aec0a530d6c8c38742a827d273cd35d359596`.
 
+38. Snapshot lifecycle v1 is implemented on draft PR #10, branch `agent/snapshot-lifecycle-v1`, head `b5412b461cfac77b93dd721f7080d1fba9f7a52f`.
+39. The overview now supports user-triggered refresh, single-flight collection, a one-second completion throttle, last-successful capture time and a retryable initial error state.
+40. A failed later refresh preserves the last successful snapshot; no history, background monitoring, permission or diagnosis scope was added.
+41. GitHub Actions run `31320108150` passed lint, unit tests, Android 16 build, stable certificate verification and artifact upload. Artifact `9039921975` digest: `sha256:d2d5e96e06f51690e9025c53cb3adf6233a9887bf0024d0953eb38706b5f3fa9`.
+42. Physical inspection on the OPPO A60 5G is pending. Do not call this checkpoint VERIFIED or merge PR #10 before refresh/timestamp/error behavior is inspected.
+
+43. The premium design direction is recorded in D-020 and `DESIGN_BRIEF.md`: the experience must be distinctive, premium and emotionally compelling, with “professional” treated as the minimum bar.
+44. The current large-card, prose-heavy overview is recorded as functional prototype design debt; the next design milestone must improve hierarchy, first-open impact, scanability, semantic states and progressive disclosure rather than only recoloring the existing layout.
+45. The next design milestone is limited to the existing overview and current truthful data. It adds no collectors, permissions, background monitoring, history, optimization action or fabricated score/value.
+46. Design acceptance requires lint/tests/CI, APK inspection, physical visual inspection on the OPPO A60 5G and user review. Compilation alone cannot mark the design complete.
+
 **Current production code:** real RAM/thermal/storage/access snapshot, factual battery snapshot, diagnosis-engine v1 and CPU activity probe v1 are present on `main`. Numeric device-level CPU activity is unavailable on the target.
 **Verified:** diagnosis-engine v1 CI and target inspection, CPU probe CI, complete artifact integrity, stable certificate, clean install/in-place updates, previous telemetry rendering, factual battery snapshot and truthful rejection of the target's invalid voltage.
-**First unfinished point:** read all state documents and the merged `main`, then select one small, evidence-backed next milestone. Do not infer battery voltage or numeric CPU activity; do not begin a broad implementation.
+**Current checkpoint:** PR #10 is CI-VERIFIED but not physically verified or merged. Main remains unchanged at `b550b2a5d69de343b94df595b351668b73786511`.
+**First unfinished point:** the snapshot lifecycle physical gate remains pending, and the user has now prioritized the next bounded product milestone as the premium overview design/UX v1. Implement that design scope on top of the current branch without adding new capability, then verify it physically before calling it complete. Preserve unavailable numeric CPU activity and battery voltage.

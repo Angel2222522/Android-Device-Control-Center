@@ -5,7 +5,7 @@
 - [x] Use a public canonical GitHub repository.
 - [ ] User chooses storage-permission posture.
 - [ ] User decides whether the local-VPN firewall is core or later optional scope.
-- [ ] User chooses initial brand/experience direction.
+- [x] Record the premium, distinctive and emotionally compelling design/experience direction; final brand identity remains open.
 - [ ] Confirm product/license strategy before borrowing any implementation.
 - [ ] Accept or revise proposed milestones.
 
@@ -62,6 +62,19 @@
 - [x] Physically verify the target's explicit `/proc/stat` unavailable state; do not fabricate a numeric CPU percentage.
 - [x] Mark PR #9 ready and merge the verified CPU activity probe checkpoint.
 
+## Phase 2 — Snapshot lifecycle v1 (current checkpoint)
+
+- [x] Define a user-triggered refresh boundary without background monitoring.
+- [x] Keep collection off the Compose/UI thread and reject concurrent refreshes.
+- [x] Throttle completed refreshes to at most once per second for thermal/API safety.
+- [x] Display the last successful capture time.
+- [x] Preserve the last valid snapshot and show a retryable error state after collection failure.
+- [x] Add unit coverage for refresh gating, state transitions and timestamp presentation.
+- [x] Pass GitHub Actions lint, unit tests, Android 16 build, signing verification and artifact upload.
+- [ ] Install the milestone APK over the current stable-signed app and inspect the refresh control.
+- [ ] Physically verify refresh, timestamp, repeated-tap protection and failure-state behavior on the target phone.
+- [ ] Merge the physically verified snapshot lifecycle checkpoint.
+
 ## Phase 2 — Battery factual snapshot
 
 - [x] Verify official Android 16 battery API semantics and units.
@@ -77,3 +90,17 @@
 - [x] Install the corrected APK over the current version and re-test the battery voltage path.
 - [x] Physically verify explicit unavailable voltage handling when no trusted source exists.
 - [x] Physically verify the factual battery snapshot rendering and merge PR #7.
+
+
+## Phase 2 — Premium design/UX v1 (next bounded milestone)
+
+- [x] Record the premium, distinctive and emotionally compelling design direction.
+- [x] Record the current overview's visual debt and the physical-device acceptance gate.
+- [ ] Define and implement a coherent visual language for the existing overview.
+- [ ] Make the first viewport communicate primary device state and attention item within seconds.
+- [ ] Replace uniform information walls with a clear scan-first hierarchy and progressive disclosure.
+- [ ] Preserve truthful measurements, provenance, limitations and unavailable states.
+- [ ] Add only presentation/state tests required by the redesign; do not add new capability scope.
+- [ ] Pass lint, unit tests, Android 16 build, signing verification and GitHub Actions.
+- [ ] Install and visually inspect the design milestone on the OPPO A60 5G.
+- [ ] Accept the first design milestone only after physical visual inspection and user review.
