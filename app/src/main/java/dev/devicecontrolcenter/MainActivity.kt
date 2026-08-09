@@ -1,13 +1,19 @@
 package dev.devicecontrolcenter
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.provider.Settings
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
@@ -87,13 +93,34 @@ private val CriticalAccent = Color(0xFFFF929F)
 private val UnavailableAccent = Color(0xFFAEB8C9)
 
 class MainActivity : ComponentActivity() {
+    private val allFilesAccessState = mutableStateOf(false)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        allFilesAccessState.value = Environment.isExternalStorageManager()
         setContent {
             PremiumTheme {
-                CapabilityRoute(context = this@MainActivity)
+                CapabilityRoute(
+                    context = this@MainActivity,
+                    hasAllFilesAccess = allFilesAccessState.value,
+                    onEnableAllFilesAccess = ::openAllFilesAccessSettings,
+                )
             }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        allFilesAccessState.value = Environment.isExternalStorageManager()
+    }
+
+    private fun openAllFilesAccessSettings() {
+        val appSettingsIntent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
+            data = Uri.parse("package:$packageName")
+        }
+        runCatching { startActivity(appSettingsIntent) }.onFailure {
+            runCatching { startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)) }
         }
     }
 }
@@ -107,18 +134,168 @@ private fun PremiumTheme(content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun CapabilityRoute(context: Context) {
+private fun CapabilityRoute(
+    context: Context,
+    hasAllFilesAccess: Boolean,
+    onEnableAllFilesAccess: () -> Unit,
+) {
     val state = remember { mutableStateOf(SnapshotUiState<DeviceSnapshot>()) }
+    val historyState = remember { mutableStateOf(HistoryUiState()) }
+    val storageState = remember {
+        mutableStateOf(StorageScanState(selectedTreeUri = StorageSelectionStore.read(context)))
+    }
     val executor = remember { Executors.newSingleThreadExecutor() }
     val mainHandler = remember { Handler(Looper.getMainLooper()) }
     val active = remember { AtomicBoolean(true) }
     val refreshGate = remember { SnapshotRefreshGate() }
+    val storageScanInFlight = remember { AtomicBoolean(false) }
+    val historyRepository = remember(context) { SnapshotHistoryRepository(context) }
 
     DisposableEffect(Unit) {
         onDispose {
             active.set(false)
             refreshGate.cancel()
+            storageScanInFlight.set(false)
             executor.shutdownNow()
+        }
+    }
+
+    fun loadHistory() {
+        historyState.value = historyState.value.copy(isLoading = true, errorMessage = null)
+        runCatching {
+            executor.execute {
+                val result = runCatching { historyRepository.recent() }
+                mainHandler.post {
+                    if (!active.get()) return@post
+                    historyState.value = result.fold(
+                        onSuccess = { entries -> HistoryUiState(entries = entries) },
+                        onFailure = {
+                            HistoryUiState(errorMessage = "Το τοπικό ιστορικό δεν είναι διαθέσιμο τώρα.")
+                        },
+                    )
+                }
+            }
+        }.onFailure {
+            historyState.value = HistoryUiState(errorMessage = "Το τοπικό ιστορικό δεν είναι διαθέσιμο τώρα.")
+        }
+    }
+
+    fun persistSnapshot(snapshot: DeviceSnapshot, capturedAtMillis: Long) {
+        runCatching {
+            executor.execute {
+                val result = runCatching {
+                    historyRepository.record(snapshot, capturedAtMillis)
+                    historyRepository.recent()
+                }
+                mainHandler.post {
+                    if (!active.get()) return@post
+                    historyState.value = result.fold(
+                        onSuccess = { entries -> HistoryUiState(entries = entries) },
+                        onFailure = {
+                            HistoryUiState(errorMessage = "Το στιγμιότυπο εμφανίστηκε, αλλά δεν αποθηκεύτηκε στο ιστορικό.")
+                        },
+                    )
+                }
+            }
+        }.onFailure {
+            historyState.value = HistoryUiState(errorMessage = "Το στιγμιότυπο εμφανίστηκε, αλλά δεν αποθηκεύτηκε στο ιστορικό.")
+        }
+    }
+
+    fun scanStorage(uri: android.net.Uri) {
+        if (!storageScanInFlight.compareAndSet(false, true)) return
+
+        storageState.value = storageState.value.copy(
+            selectedTreeUri = uri,
+            source = StorageScanSource.SELECTED_FOLDER,
+            isScanning = true,
+            errorMessage = null,
+        )
+        runCatching {
+            executor.execute {
+                val result = runCatching { StorageScanner.scan(context, uri) }
+                mainHandler.post {
+                    storageScanInFlight.set(false)
+                    if (!active.get()) return@post
+                    storageState.value = result.fold(
+                        onSuccess = { scan ->
+                            StorageScanState(
+                                selectedTreeUri = uri,
+                                result = scan,
+                                source = StorageScanSource.SELECTED_FOLDER,
+                            )
+                        },
+                        onFailure = { error ->
+                            storageState.value.copy(
+                                isScanning = false,
+                                errorMessage = error.message ?: "Η read-only σάρωση απέτυχε.",
+                            )
+                        },
+                    )
+                }
+            }
+        }.onFailure {
+            storageScanInFlight.set(false)
+            storageState.value = storageState.value.copy(
+                isScanning = false,
+                errorMessage = "Η read-only σάρωση απέτυχε.",
+            )
+        }
+    }
+
+    fun scanAllStorage() {
+        if (!storageScanInFlight.compareAndSet(false, true)) return
+
+        val selectedTreeUri = storageState.value.selectedTreeUri
+        storageState.value = storageState.value.copy(
+            source = StorageScanSource.SHARED_STORAGE,
+            isScanning = true,
+            errorMessage = null,
+        )
+        runCatching {
+            executor.execute {
+                val result = runCatching { SharedStorageScanner.scan(context) }
+                mainHandler.post {
+                    storageScanInFlight.set(false)
+                    if (!active.get()) return@post
+                    storageState.value = result.fold(
+                        onSuccess = { scan ->
+                            StorageScanState(
+                                selectedTreeUri = selectedTreeUri,
+                                result = scan,
+                                source = StorageScanSource.SHARED_STORAGE,
+                            )
+                        },
+                        onFailure = { error ->
+                            storageState.value.copy(
+                                isScanning = false,
+                                errorMessage = error.message ?: "Η read-only σάρωση απέτυχε.",
+                            )
+                        },
+                    )
+                }
+            }
+        }.onFailure {
+            storageScanInFlight.set(false)
+            storageState.value = storageState.value.copy(
+                isScanning = false,
+                errorMessage = "Η read-only σάρωση απέτυχε.",
+            )
+        }
+    }
+
+    val folderPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTree(),
+    ) { uri ->
+        if (uri != null) {
+            runCatching {
+                context.contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION,
+                )
+            }
+            StorageSelectionStore.save(context, uri)
+            scanStorage(uri)
         }
     }
 
@@ -136,7 +313,10 @@ private fun CapabilityRoute(context: Context) {
 
                     refreshGate.complete(completedAtElapsed)
                     state.value = result.fold(
-                        onSuccess = { snapshot -> state.value.success(snapshot, capturedAtMillis) },
+                        onSuccess = { snapshot ->
+                            persistSnapshot(snapshot, capturedAtMillis)
+                            state.value.success(snapshot, capturedAtMillis)
+                        },
                         onFailure = {
                             state.value.failure("Η συλλογή του στιγμιότυπου απέτυχε. Δοκίμασε ξανά.")
                         },
@@ -152,6 +332,7 @@ private fun CapabilityRoute(context: Context) {
     }
 
     LaunchedEffect(Unit) {
+        loadHistory()
         refresh()
     }
 
@@ -162,6 +343,19 @@ private fun CapabilityRoute(context: Context) {
             snapshot = snapshot,
             state = currentState,
             onRefresh = ::refresh,
+            historyState = historyState.value,
+            storageState = storageState.value,
+            hasAllFilesAccess = hasAllFilesAccess,
+            onChooseStorageFolder = { folderPicker.launch(null) },
+            onEnableAllFilesAccess = onEnableAllFilesAccess,
+            onScanAllStorage = ::scanAllStorage,
+            onRescanStorage = {
+                when (storageState.value.source) {
+                    StorageScanSource.SHARED_STORAGE -> scanAllStorage()
+                    StorageScanSource.SELECTED_FOLDER, null ->
+                        storageState.value.selectedTreeUri?.let(::scanStorage)
+                }
+            },
         )
 
         currentState.isRefreshing -> LoadingScreen()
@@ -247,6 +441,13 @@ private fun CapabilityScreen(
     snapshot: DeviceSnapshot,
     state: SnapshotUiState<DeviceSnapshot>,
     onRefresh: () -> Unit,
+    historyState: HistoryUiState,
+    storageState: StorageScanState,
+    hasAllFilesAccess: Boolean,
+    onChooseStorageFolder: () -> Unit,
+    onEnableAllFilesAccess: () -> Unit,
+    onScanAllStorage: () -> Unit,
+    onRescanStorage: () -> Unit,
 ) {
     val diagnosis = remember(snapshot) { DeviceDiagnosisEngine.analyze(snapshot) }
     val overviewStatus = OverviewPresentation.status(diagnosis)
@@ -267,6 +468,9 @@ private fun CapabilityScreen(
             }
             item {
                 SnapshotControls(state = state, onRefresh = onRefresh)
+            }
+            item {
+                HistoryCard(state = historyState)
             }
             item {
                 SectionHeading(
@@ -324,6 +528,16 @@ private fun CapabilityScreen(
                 StorageCard(snapshot = snapshot)
             }
             item {
+                StorageIntelligenceCard(
+                    state = storageState,
+                    hasAllFilesAccess = hasAllFilesAccess,
+                    onChooseFolder = onChooseStorageFolder,
+                    onEnableAllFilesAccess = onEnableAllFilesAccess,
+                    onScanAllStorage = onScanAllStorage,
+                    onRescan = onRescanStorage,
+                )
+            }
+            item {
                 DiagnosisCard(report = diagnosis)
             }
             item {
@@ -333,7 +547,7 @@ private fun CapabilityScreen(
                 MemoryDetailsCard(snapshot = snapshot)
             }
             item {
-                AccessCard(snapshot = snapshot)
+                AccessCard(snapshot = snapshot, hasAllFilesAccess = hasAllFilesAccess)
             }
             item {
                 Text(
@@ -481,6 +695,95 @@ private fun SnapshotControls(
 }
 
 @Composable
+private fun HistoryCard(state: HistoryUiState) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(22.dp),
+        border = BorderStroke(1.dp, toneAccent(OverviewTone.INFO).copy(alpha = 0.28f)),
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(9.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top,
+            ) {
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(text = "Ιστορικό στιγμιότυπων", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        text = SnapshotHistoryPresentation.summary(state.entries),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                StatusBadge(text = "Μόνο τοπικά", tone = OverviewTone.INFO)
+            }
+
+            if (state.isLoading) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(9.dp),
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Text(text = "Φόρτωση ιστορικού…", style = MaterialTheme.typography.bodySmall)
+                }
+            }
+
+            state.errorMessage?.let { message ->
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+
+            state.entries.take(3).forEach { entry ->
+                HistoryRow(entry = entry)
+            }
+
+            Text(
+                text = "Δεν συγχρονίζεται και δεν αποστέλλεται εκτός συσκευής.",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun HistoryRow(entry: SnapshotHistoryEntity) {
+    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = SnapshotPresentation.capturedTimeLabel(entry.capturedAtMillis),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = "RAM ${SnapshotHistoryPresentation.memoryLabel(entry)}",
+                style = MaterialTheme.typography.labelMedium,
+            )
+        }
+        Text(
+            text = "Μπαταρία ${SnapshotHistoryPresentation.batteryLabel(entry)} · Θερμική κατάσταση ${SnapshotHistoryPresentation.thermalLabel(entry)}",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
 private fun SectionHeading(title: String, subtitle: String) {
     Column(
         modifier = Modifier.padding(top = 6.dp, start = 2.dp, end = 2.dp),
@@ -532,6 +835,243 @@ private fun MetricTile(
                 text = supporting,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun StorageIntelligenceCard(
+    state: StorageScanState,
+    hasAllFilesAccess: Boolean,
+    onChooseFolder: () -> Unit,
+    onEnableAllFilesAccess: () -> Unit,
+    onScanAllStorage: () -> Unit,
+    onRescan: () -> Unit,
+) {
+    var expanded by remember(state.result) { mutableStateOf(false) }
+    val result = state.result
+    val badgeTone = when {
+        state.isScanning -> OverviewTone.INFO
+        state.source == StorageScanSource.SHARED_STORAGE -> OverviewTone.NEUTRAL
+        result != null -> OverviewTone.INFO
+        state.selectedTreeUri != null -> OverviewTone.NEUTRAL
+        else -> OverviewTone.UNAVAILABLE
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize(),
+        colors = CardDefaults.cardColors(containerColor = toneContainer(OverviewTone.INFO)),
+        shape = RoundedCornerShape(26.dp),
+        border = BorderStroke(1.dp, toneAccent(OverviewTone.INFO).copy(alpha = 0.30f)),
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top,
+            ) {
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(text = "Έξυπνη εικόνα αποθήκευσης", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        text = "Πλήρης συλλογή με ρητή άδεια ή μόνο σε φάκελο που επιλέγεις εσύ",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                StatusBadge(
+                    text = when {
+                        state.isScanning -> "Ανάλυση…"
+                        state.source == StorageScanSource.SHARED_STORAGE -> "Πλήρης πρόσβαση"
+                        result != null -> "Read-only"
+                        state.selectedTreeUri != null -> "Έχει επιλεγεί"
+                        else -> "Περιορισμένη"
+                    },
+                    tone = badgeTone,
+                )
+            }
+
+            if (result == null) {
+                Text(
+                    text = if (hasAllFilesAccess) {
+                        "Η πλήρης πρόσβαση είναι ενεργή. Η σάρωση θα εξετάσει μόνο μεταδεδομένα στον κοινόχρηστο χώρο."
+                    } else {
+                        "Δεν υπάρχει ακόμη ανάλυση αρχείων. Χωρίς πλήρη πρόσβαση, η εφαρμογή βλέπει μόνο φάκελο που επιλέγεις ρητά."
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                Text(
+                    text = result.rootName,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    text = StorageIntelligencePresentation.summary(result),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = "Πηγή: " + if (state.source == StorageScanSource.SHARED_STORAGE) {
+                        "κοινόχρηστοι χώροι"
+                    } else {
+                        "επιλεγμένος φάκελος"
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = StorageIntelligencePresentation.knownSize(result),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                TextButton(onClick = { expanded = !expanded }) {
+                    Text(text = if (expanded) "Απόκρυψη ευρημάτων" else "Προβολή ευρημάτων")
+                }
+                AnimatedVisibility(visible = expanded) {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f))
+                        Text(
+                            text = "Μεγαλύτερα αρχεία",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                        if (result.largestFiles.isEmpty()) {
+                            Text(text = "Δεν βρέθηκαν αρχεία με διαθέσιμο μέγεθος.", style = MaterialTheme.typography.bodySmall)
+                        } else {
+                            result.largestFiles.take(3).forEach { entry ->
+                                StorageFileRow(entry = entry)
+                            }
+                        }
+
+                        Text(
+                            text = "Παλαιότερα αρχεία",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                        if (result.oldestFiles.isEmpty()) {
+                            Text(text = "Δεν βρέθηκε αξιόπιστη ημερομηνία τροποποίησης.", style = MaterialTheme.typography.bodySmall)
+                        } else {
+                            result.oldestFiles.take(3).forEach { entry ->
+                                StorageFileRow(entry = entry, showSize = false)
+                            }
+                        }
+
+                        Text(
+                            text = "Ομάδες ίδιου μεγέθους · όχι επιβεβαιωμένοι διπλότυποι",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                        if (result.sameSizeCandidates.isEmpty()) {
+                            Text(text = "Δεν βρέθηκαν ομάδες ίδιου μεγέθους.", style = MaterialTheme.typography.bodySmall)
+                        } else {
+                            result.sameSizeCandidates.take(3).forEach { group ->
+                                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    Text(
+                                        text = StorageIntelligencePresentation.sameSizeLabel(group),
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
+                                    Text(
+                                        text = group.fileNames.joinToString(" · "),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
+                            }
+                        }
+                        Text(
+                            text = StorageIntelligencePresentation.limitation(result),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+
+            state.errorMessage?.let { message ->
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+
+            Button(
+                onClick = if (hasAllFilesAccess) onScanAllStorage else onEnableAllFilesAccess,
+                enabled = !state.isScanning,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                ),
+            ) {
+                Text(
+                    text = when {
+                        state.isScanning -> "Ανάλυση…"
+                        hasAllFilesAccess -> "Σάρωση κοινόχρηστων χώρων"
+                        else -> "Ενεργοποίηση πλήρους πρόσβασης"
+                    },
+                )
+            }
+            TextButton(
+                onClick = onChooseFolder,
+                enabled = !state.isScanning,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(text = "Ή επίλεξε μόνο έναν φάκελο")
+            }
+            if (state.result != null && !state.isScanning) {
+                TextButton(onClick = onRescan, modifier = Modifier.fillMaxWidth()) {
+                    Text(text = "Σάρωση ξανά")
+                }
+            }
+            Text(
+                text = if (hasAllFilesAccess) {
+                    "Η πλήρης πρόσβαση ενεργοποιείται μόνο από τις ρυθμίσεις Android. Η εφαρμογή διαβάζει μόνο μεταδεδομένα και δεν διαγράφει ή μετακινεί αρχεία."
+                } else {
+                    "Η πλήρης πρόσβαση δεν ζητείται αυτόματα. Η επιλογή φακέλου παραμένει διαθέσιμη χωρίς ευρεία άδεια."
+                },
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun StorageFileRow(entry: StorageFileEntry, showSize: Boolean = true) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                text = entry.name,
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = StorageIntelligencePresentation.modifiedAt(entry.lastModifiedMillis),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        if (showSize) {
+            Text(
+                text = StorageIntelligencePresentation.fileSize(entry),
+                style = MaterialTheme.typography.labelMedium,
+                textAlign = TextAlign.End,
             )
         }
     }
@@ -788,7 +1328,7 @@ private fun MemoryDetailsCard(snapshot: DeviceSnapshot) {
 }
 
 @Composable
-private fun AccessCard(snapshot: DeviceSnapshot) {
+private fun AccessCard(snapshot: DeviceSnapshot, hasAllFilesAccess: Boolean) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -798,7 +1338,7 @@ private fun AccessCard(snapshot: DeviceSnapshot) {
         Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(text = "Ειδικές προσβάσεις", style = MaterialTheme.typography.titleMedium)
             AccessRow("Στατιστικά χρήσης", snapshot.hasUsageAccess)
-            AccessRow("Πρόσβαση όλων των αρχείων", snapshot.hasAllFilesAccess)
+            AccessRow("Πρόσβαση όλων των αρχείων", hasAllFilesAccess)
             Text(
                 text = "Η εφαρμογή δεν ζητά πρόσβαση αυτόματα.",
                 style = MaterialTheme.typography.labelMedium,
