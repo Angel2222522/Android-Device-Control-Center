@@ -28,7 +28,7 @@
 - Zero-cost GitHub Actions is unlimited on standard runners for public repositories; private repositories have quotas.
 - APKs signed by different certificates cannot update the same Android application ID. CI debug builds therefore require a stable development-only identity; production uses a separate protected key.
 
-- The current overview UI is a functional prototype rather than the accepted final product design. Its uniform large cards, weak hierarchy and prose-heavy presentation are recorded design debt; the premium redesign is implemented and CI-VERIFIED on draft PR #11, but physical visual verification and merge are still pending.
+- The current overview UI is a functional prototype rather than the accepted final product design. Its uniform large cards, weak hierarchy and prose-heavy presentation are recorded design debt; the premium redesign is implemented and physically verified/accepted as a first baseline on draft PR #11; final polish and merge remain separate follow-up work.
 
 
 ## 2026-08-09 — Premium overview v1 physical inspection and corrective iteration
@@ -43,3 +43,14 @@
 - Corrective artifact `9040538004` has ZIP digest `sha256:1725f6a07b5980224efa7785c298268bb0ae0c23690ca657b06e7fc8ecda4d34`; extracted APK SHA-256 is `c12e5775519c230281c26d6b75ee0dde49041bf972d85aaa1dafda1787a9bbac`.
 - The artifact ZIP and APK passed integrity inspection. Unit report: 30 tests, 0 failures. Lint: 0 errors and 6 existing warnings.
 - The corrective candidate is ready for a second physical visual inspection. The premium design remains **CI-VERIFIED but NOT VERIFIED/ACCEPTED** until that inspection and user review pass.
+
+
+## 2026-08-09 — Premium overview v1 physical verification and user acceptance
+
+- The corrective candidate was installed and visually inspected on the OPPO A60 5G through six user-supplied screenshots covering the first viewport, quick metrics, diagnosis, battery details, RAM details and special accesses.
+- The previously observed truncation defects were resolved: the capture time rendered as `19:08:00`, the thermal and CPU tile copy remained readable, and both special-access badges were fully visible.
+- The first viewport, dark visual system, semantic status hero, metric grid, storage surface, diagnosis disclosure and technical-detail sections rendered coherently on the physical device.
+- Truthful unavailable states remained intact: numeric CPU activity was unavailable, battery voltage remained unavailable/rejected, and no health, capacity or optimization claim was introduced.
+- The user reviewed the result and accepted it as a good first version, choosing to defer further design refinement to a later phase so functional development can continue.
+- Premium overview design/UX v1 is now **PHYSICALLY VERIFIED and ACCEPTED AS A BASELINE**, not declared final. Future polish remains recorded design debt.
+- The design PR remains stacked on snapshot lifecycle PR #10. The next unfinished gate is PR #10 physical verification of repeated-tap protection and failure-state preservation; the design milestone must not be described as the final product design.
