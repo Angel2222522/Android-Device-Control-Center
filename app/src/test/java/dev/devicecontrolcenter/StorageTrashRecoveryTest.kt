@@ -3,6 +3,9 @@ package dev.devicecontrolcenter
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 class StorageTrashRecoveryTest {
     @Test
@@ -28,6 +31,42 @@ class StorageTrashRecoveryTest {
 
         assertFalse(legacy.isComplete)
         assertTrue(legacy.hasComparableIdentity)
+    }
+
+    @Test
+    fun recoveryWaitsWhileMoveOwnsTheProcessWideTrashOperationLock() {
+        val moveEntered = CountDownLatch(1)
+        val releaseMove = CountDownLatch(1)
+        val recoveryStarted = CountDownLatch(1)
+        val recoveryEntered = CountDownLatch(1)
+        val executor = Executors.newFixedThreadPool(2)
+
+        try {
+            val move = executor.submit {
+                StorageTrashIndex.withOperationLock {
+                    moveEntered.countDown()
+                    assertTrue(releaseMove.await(2, TimeUnit.SECONDS))
+                }
+            }
+            assertTrue(moveEntered.await(2, TimeUnit.SECONDS))
+
+            val recovery = executor.submit {
+                recoveryStarted.countDown()
+                StorageTrashIndex.withOperationLock {
+                    recoveryEntered.countDown()
+                }
+            }
+            assertTrue(recoveryStarted.await(2, TimeUnit.SECONDS))
+            assertFalse(recoveryEntered.await(100, TimeUnit.MILLISECONDS))
+
+            releaseMove.countDown()
+            move.get(2, TimeUnit.SECONDS)
+            recovery.get(2, TimeUnit.SECONDS)
+            assertTrue(recoveryEntered.await(2, TimeUnit.SECONDS))
+        } finally {
+            releaseMove.countDown()
+            executor.shutdownNow()
+        }
     }
 
     private fun fingerprint(sha256: String? = "aabbcc"): StorageSourceFingerprint =
