@@ -88,6 +88,7 @@
 - **Decision:** Accept Android's battery-broadcast voltage only inside a conservative plausible phone-battery range. If it fails validation, try the standard read-only `power_supply` sysfs `voltage_now` source in μV and convert it to mV. Preserve the source in the snapshot.
 - **Rejected:** Converting an OEM value such as `3` to `3000 mV` by heuristic. If no trusted source is available, show `μη διαθέσιμη` and explain that the value was rejected or absent.
 - **Why:** The target OPPO returned `3 mV (0.003 V)` for a live phone. The official Android/AOSP contract describes the broadcast voltage as mV and the standard power-supply voltage file as μV, but the target's observed value violates the expected physical range. Truthful unavailability is safer than a plausible-looking fabricated conversion.
+- **Physical result:** The corrected APK rejected the target value and displayed an explicit unavailable state. This handling is verified; a usable voltage measurement is not available on the target device.
 
 ## Open product decisions
 

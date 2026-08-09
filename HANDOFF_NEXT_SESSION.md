@@ -17,11 +17,12 @@
 15. The first PR #7 CI run `31315368065` failed only at test compilation because of a nullable `Double` assertion; the production code compiled. Corrective commit `9ffe70d5a240c7d4e8e5e64c39bbafb4f3e829eb` was added.
 16. Corrected CI run `31315477707` passed lint, unit tests, Android 16 build, stable certificate verification and artifact upload.
 17. The single checkpoint APK is ready for physical inspection. Extracted APK SHA-256: `9f8ee46e05793606f33fe1959a7b7e94c4ae8ea246603f02a73954706ee97480`.
-18. The checkpoint was installed over the current app and inspected on the target. Level, state/source, temperature and charge-counter fields rendered; the Android broadcast returned `3 mV (0.003 V)` for voltage, which is physically implausible. Current was `929 μA` while discharging, so it remains a raw sensor value with no inferred direction.
-19. The battery milestone is therefore **PARTIALLY INSPECTED, NOT VERIFIED**. Do not merge PR #7 yet.
-20. The correction now in the working tree rejects broadcast voltage outside a conservative plausible envelope, tries only the standard read-only `power_supply` sysfs `voltage_now` path in μV, records the voltage source and shows unavailable when neither source is trustworthy.
-21. Corrected commit `fff926687aeec0b4c2e7058c3efe80060a6e0eb` passed CI run `31316180145`; artifact `9038822328`; extracted APK SHA-256 `f8e87d4e2681c2bb329df814b32b2c61bd779b08275a210a39f6af043e8231c`.
+18. The first checkpoint was installed over the current app and inspected on the target. Level, state/source, temperature and charge-counter fields rendered; the Android broadcast returned `3 mV (0.003 V)` for voltage, which is physically implausible. Current was `929 μA` while discharging, so it remains a raw sensor value with no inferred direction.
+19. The corrected checkpoint was then installed over the current app. It rendered 62%, discharging, 35.8 °C, 762 μA raw current and 2,943 mAh charge counter; it rejected the invalid voltage and displayed explicit unavailable state/provenance.
+20. The factual battery snapshot and truthful unavailable-voltage handling are now **PHYSICALLY VERIFIED**. A usable voltage reading is not available on this OPPO target; do not infer one.
+21. The correction rejects broadcast voltage outside a conservative plausible envelope, tries only the standard read-only `power_supply` sysfs `voltage_now` path in μV, records the voltage source and shows unavailable when neither source is trustworthy.
+22. Corrected commit `fff926687aeec0b4c2e7058c3efe80060a6e0eb` passed CI run `31316180145`; artifact `9038822328`; extracted APK SHA-256 `f8e87d4e2681c2bb329df814b32b2c61bd779b08275a210a39f6af043e8231c`.
 
 **Current production code:** real RAM/thermal/storage/access snapshot plus a factual battery snapshot; no diagnosis engine.
-**Verified:** CI, stable certificate, clean install, launch and previous telemetry rendering; the first battery card inspection is partial and exposed an OEM voltage-quality failure.
-**First unfinished point:** install the single corrected checkpoint APK, and physically verify either a plausible voltage with source provenance or an explicit unavailable state. Keep the battery milestone UNVERIFIED until then.
+**Verified:** CI, stable certificate, clean install, in-place updates, previous telemetry rendering, factual battery snapshot and truthful rejection of the target's invalid voltage.
+**First unfinished point:** after merging PR #7, begin the first diagnosis-engine slice. Do not treat battery voltage as available on the OPPO target, and do not add health/capacity claims.

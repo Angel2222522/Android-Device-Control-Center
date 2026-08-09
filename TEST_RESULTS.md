@@ -119,4 +119,13 @@
 - GitHub Actions run `31316180145`: lint, unit tests, Android 16 build, stable certificate verification and artifact upload **PASSED**.
 - Artifact ID `9038822328`; artifact digest `sha256:1c592e07f4d7c1216407c74431e65790aa380b743383dc8801786a3e920a2d02`.
 - Extracted corrected APK SHA-256: `f8e87d4e2681c2bb329df814b32b2c61bd779b08275a210a39f6af043e8231c`.
-- Physical installation and re-test of the corrected APK: **PENDING**. The battery milestone remains **UNVERIFIED**.
+
+## 2026-08-09 — Battery corrected checkpoint physical verification
+
+- Installed the corrected stable-signed APK over the existing app without uninstalling: **PASSED**.
+- Target screenshot: OPPO A60 5G, Android/ColorOS 16.0.5; application launched and retained the existing RAM, thermal, storage and access-state cards: **PASSED**.
+- Battery snapshot rendered: 62% level, discharging, battery source, 35.8 °C, instantaneous raw current `762 μA (0.76 mA)`, charge counter `2,943 mAh`; values are point-in-time and dynamic.
+- Invalid broadcast voltage path: **PASSED** — the prior `3 mV` value is no longer displayed as a measurement. The UI shows `Τάση: μη διαθέσιμη` and identifies the source as unavailable/rejected as untrusted.
+- Trusted voltage measurement on this target: **NOT AVAILABLE**. The read-only sysfs fallback did not provide a usable value. No voltage value is claimed.
+- Battery factual snapshot and truthful unavailable-state handling: **PHYSICALLY VERIFIED**.
+- Battery health, true capacity and drain-direction interpretation remain intentionally unimplemented.
