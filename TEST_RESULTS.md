@@ -215,3 +215,16 @@
 - This is a documentation-only product-direction checkpoint; no production code was changed.
 - No new test, lint, build, APK or CI result is claimed for this note.
 - The next design/UX v1 milestone will require implementation, automated validation, APK inspection and physical visual inspection on the OPPO target before acceptance.
+
+## 2026-08-09 — Premium overview design/UX v1 CI checkpoint
+
+- Production UI changes: premium dark visual system, status hero, compact metric tiles, semantic state colors and progressive disclosure for technical details.
+- Production data collectors, diagnosis rules and snapshot lifecycle were not changed.
+- Added OverviewPresentationTest for warning, critical, data-quality-only and neutral overview states.
+- Local git diff --check: PASSED.
+- Local Gradle execution: NOT RUN because Gradle is unavailable in the inspection workspace.
+- GitHub Actions run 31321637219: lint, unit tests, Android 16 build, stable certificate verification and artifact upload PASSED.
+- Artifact 9040353819; ZIP digest: sha256:18ad6ea8c6eb2287bb15221d28376b9864619b3a354f92d9fdfd30d7a9b38636.
+- Complete APK: 27,259,870 bytes; SHA-256: f795026281bdf57a1c1cddb9a943930a8c3e3c50a125376da5f03c5888fb7024.
+- ZIP and APK archive integrity checks: PASSED.
+- Physical visual inspection on the OPPO target: PENDING; do not call the design VERIFIED or merged.

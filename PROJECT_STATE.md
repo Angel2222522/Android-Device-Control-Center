@@ -96,6 +96,19 @@ Snapshot lifecycle v1 is the next bounded slice on draft PR #10. It improves the
 - No fake health/optimization score, fabricated CPU value, unsupported diagnosis or hidden limitation may be introduced for visual effect.
 - Implementation, CI and physical visual inspection on the OPPO target are required before the design can be called complete.
 
+## Current milestone — Premium overview design/UX v1 verification checkpoint
+
+- Replaced the prototype overview with a deliberate dark visual system, a first-viewport status hero and compact scan-first metric surfaces.
+- Added semantic visual treatment for normal, informational, warning, critical and unavailable states without introducing a health score or unsupported certainty.
+- Moved diagnosis evidence and battery/RAM technical fields behind progressive disclosure while preserving the full evidence and provenance.
+- Preserved existing collectors, diagnosis rules, refresh lifecycle, truthful unavailable states and the no-automatic-action boundary.
+- Added pure presentation-state unit coverage for warning, critical, data-quality-only and neutral overview states.
+- Draft PR #11 is on branch agent/premium-overview-design-v1, stacked on PR #10.
+- GitHub Actions run 31321637219 passed lint, unit tests, Android 16 build, stable certificate verification and artifact upload.
+- Artifact 9040353819 has ZIP digest sha256:18ad6ea8c6eb2287bb15221d28376b9864619b3a354f92d9fdfd30d7a9b38636.
+- Complete candidate APK is 27,259,870 bytes with SHA-256 f795026281bdf57a1c1cddb9a943930a8c3e3c50a125376da5f03c5888fb7024.
+- ZIP/APK integrity checks passed. Physical visual inspection on the OPPO A60 5G remains pending; this design checkpoint is not yet VERIFIED or merged.
+
 ## Verification language
 
 - Matrix `VERIFIED` = feasibility supported by current documentation/reference evidence.

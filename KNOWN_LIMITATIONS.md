@@ -28,4 +28,4 @@
 - Zero-cost GitHub Actions is unlimited on standard runners for public repositories; private repositories have quotas.
 - APKs signed by different certificates cannot update the same Android application ID. CI debug builds therefore require a stable development-only identity; production uses a separate protected key.
 
-- The current overview UI is a functional prototype rather than the accepted final product design. Its uniform large cards, weak hierarchy and prose-heavy presentation are recorded design debt; a premium redesign is planned and has not been implemented or physically verified yet.
+- The current overview UI is a functional prototype rather than the accepted final product design. Its uniform large cards, weak hierarchy and prose-heavy presentation are recorded design debt; the premium redesign is implemented and CI-VERIFIED on draft PR #11, but physical visual verification and merge are still pending.

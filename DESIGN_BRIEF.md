@@ -1,6 +1,6 @@
 # Device Control Center — Premium Design Brief
 
-**Status:** Direction recorded; implementation pending.  
+**Status:** Premium overview design/UX v1 implemented on draft PR #11; physical visual verification pending.  
 **Recorded:** 2026-08-09
 
 ## Product ambition
@@ -50,6 +50,13 @@ Out of scope:
 - automatic optimization actions;
 - final logo/name decision;
 - speculative screens for unfinished features.
+
+## Current implementation checkpoint
+
+- The overview redesign is implemented on draft PR #11 and passed CI.
+- The candidate APK has passed ZIP/APK integrity inspection.
+- Physical visual inspection on the OPPO A60 5G and user review remain pending.
+- The design is not considered complete or VERIFIED until that evidence is recorded.
 
 ## Acceptance gate
 
