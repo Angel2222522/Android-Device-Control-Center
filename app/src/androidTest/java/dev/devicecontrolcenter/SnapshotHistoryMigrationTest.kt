@@ -43,24 +43,15 @@ class SnapshotHistoryMigrationTest {
 
     @Test
     fun migrateV1ToCurrentPreservesSnapshotAndCreatesEveryNewTable() {
-        // The test applies the authoritative production Migration objects directly so it can
-        // validate the complete chain and the retained v1 row on real Android SQLite. The
-        // exported schema is still generated for Room tooling and future migration tests.
+        val migrations = productionMigrations()
+        var expectedStartVersion = 1
+        migrations.forEach { migration ->
+            assertEquals(expectedStartVersion, migration.startVersion)
+            expectedStartVersion = migration.endVersion
+        }
+        assertEquals(SnapshotHistoryDatabase.CURRENT_SCHEMA_VERSION, expectedStartVersion)
+
         migrationTestHelper.createDatabase(databaseName, 1).use { database ->
-            database.execSQL(
-                "CREATE TABLE IF NOT EXISTS snapshot_history (" +
-                    "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
-                    "capturedAtMillis INTEGER NOT NULL, " +
-                    "availableMemoryBytes INTEGER NOT NULL, " +
-                    "isLowMemory INTEGER NOT NULL, " +
-                    "thermalStatus INTEGER NOT NULL, " +
-                    "thermalHeadroom REAL, " +
-                    "availableStorageBytes INTEGER NOT NULL, " +
-                    "batteryLevelPercent INTEGER, " +
-                    "batteryTemperatureCelsius REAL, " +
-                    "cpuActivityPercent REAL" +
-                    ")",
-            )
             database.execSQL(
                 "INSERT INTO snapshot_history (" +
                     "capturedAtMillis, availableMemoryBytes, isLowMemory, thermalStatus, " +
@@ -68,60 +59,61 @@ class SnapshotHistoryMigrationTest {
                     "batteryTemperatureCelsius, cpuActivityPercent" +
                     ") VALUES (1700000000000, 123456789, 0, 2, 0.75, 987654321, 73, 31.5, 12.5)",
             )
-            var expectedStartVersion = 1
-            productionMigrations().forEach { migration ->
-                assertEquals(expectedStartVersion, migration.startVersion)
-                migration.migrate(database)
-                expectedStartVersion = migration.endVersion
-            }
-            assertEquals(SnapshotHistoryDatabase.CURRENT_SCHEMA_VERSION, expectedStartVersion)
-            database.execSQL("PRAGMA user_version = ${SnapshotHistoryDatabase.CURRENT_SCHEMA_VERSION}")
-
-            database.query(
-                "SELECT capturedAtMillis, availableMemoryBytes, isLowMemory, " +
-                    "batteryLevelPercent, captureId FROM snapshot_history",
-            ).use { cursor ->
-                assertTrue("The v1 snapshot must survive migration", cursor.moveToFirst())
-                assertEquals(1700000000000L, cursor.getLong(0))
-                assertEquals(123456789L, cursor.getLong(1))
-                assertEquals(0, cursor.getInt(2))
-                assertEquals(73, cursor.getInt(3))
-                assertTrue("New v5/v6 field must remain nullable for v1 rows", cursor.isNull(4))
-            }
-
-            assertTableExists(database, "battery_samples")
-            assertTableExists(database, "network_samples")
-            assertTableExists(database, "action_log")
-            assertTableExists(database, "history_metadata")
-            assertTableExists(database, "app_usage_history")
-
-            assertColumns(
-                database,
-                "battery_samples",
-                "plugged",
-                "voltageMillivolts",
-                "energyCounterNanowattHours",
-                "captureId",
-            )
-            assertColumns(database, "snapshot_history", "captureId")
-            assertColumns(database, "network_samples", "captureId")
-            assertColumns(database, "action_log", "captureId")
-            assertColumns(
-                database,
-                "app_usage_history",
-                "packageName",
-                "usageAvailability",
-                "storageAvailability",
-                "networkAvailability",
-            )
-
-            database.query(
-                "SELECT lastTelemetryClearedAtMillis FROM history_metadata WHERE id = 1",
-            ).use { cursor ->
-                assertTrue("Migration must seed history metadata", cursor.moveToFirst())
-                assertEquals(0L, cursor.getLong(0))
-            }
         }
+
+        migrationTestHelper
+            .runMigrationsAndValidate(
+                databaseName,
+                SnapshotHistoryDatabase.CURRENT_SCHEMA_VERSION,
+                true,
+                *migrations,
+            )
+            .use { database ->
+                database.query(
+                    "SELECT capturedAtMillis, availableMemoryBytes, isLowMemory, " +
+                        "batteryLevelPercent, captureId FROM snapshot_history",
+                ).use { cursor ->
+                    assertTrue("The v1 snapshot must survive migration", cursor.moveToFirst())
+                    assertEquals(1700000000000L, cursor.getLong(0))
+                    assertEquals(123456789L, cursor.getLong(1))
+                    assertEquals(0, cursor.getInt(2))
+                    assertEquals(73, cursor.getInt(3))
+                    assertTrue("New v5/v6 field must remain nullable for v1 rows", cursor.isNull(4))
+                }
+
+                assertTableExists(database, "battery_samples")
+                assertTableExists(database, "network_samples")
+                assertTableExists(database, "action_log")
+                assertTableExists(database, "history_metadata")
+                assertTableExists(database, "app_usage_history")
+
+                assertColumns(
+                    database,
+                    "battery_samples",
+                    "plugged",
+                    "voltageMillivolts",
+                    "energyCounterNanowattHours",
+                    "captureId",
+                )
+                assertColumns(database, "snapshot_history", "captureId")
+                assertColumns(database, "network_samples", "captureId")
+                assertColumns(database, "action_log", "captureId")
+                assertColumns(
+                    database,
+                    "app_usage_history",
+                    "packageName",
+                    "usageAvailability",
+                    "storageAvailability",
+                    "networkAvailability",
+                )
+
+                database.query(
+                    "SELECT lastTelemetryClearedAtMillis FROM history_metadata WHERE id = 1",
+                ).use { cursor ->
+                    assertTrue("Migration must seed history metadata", cursor.moveToFirst())
+                    assertEquals(0L, cursor.getLong(0))
+                }
+            }
     }
 
     /**
