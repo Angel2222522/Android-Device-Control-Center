@@ -13,7 +13,7 @@
 - The memory rule uses only Android's official `lowMemory` flag; it does not infer pressure from an arbitrary available/total ratio or identify a responsible app.
 - The thermal rule reports the current Android status and may include headroom as evidence, but it cannot establish which app, component or workload caused the restriction. Thermal values are dynamic.
 - The battery rule reports a voltage data-quality gap when needed; it does not estimate battery health, true capacity, drain direction or remaining runtime.
-- The first diagnosis-engine v1 implementation checkpoint is not physically verified yet; CI, APK inspection and target-device inspection remain required.
+- Diagnosis engine v1 is a current-snapshot slice only. Its CI and target-device behavior are verified, but historical baselines, confidence, alternative-cause analysis and cross-domain correlation remain unimplemented.
 - Thermal/headroom APIs depend on hardware support; fine-grained sensor files may be inaccessible. The headroom value is a normalized thermal-envelope signal, not a temperature, and values above 1.0 do not map uniquely to severity levels beyond the severe threshold.
 - Shizuku non-root mode is ADB-shell level, restarts after boot and varies by Android/OEM permissions.
 - Local VPN firewall occupies Android's single VPN slot and can add battery/latency overhead.

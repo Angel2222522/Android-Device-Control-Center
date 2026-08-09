@@ -26,9 +26,11 @@
 
 24. The first diagnosis-engine v1 implementation checkpoint is on branch `feature/diagnosis-engine-v1`. It evaluates only the Android low-memory flag, current thermal status and battery-voltage data quality.
 25. Findings are versioned and explainable: rule ID/version, condition or data-quality type, severity, evidence and explicit limitations. No score, memory ratio, health claim, app attribution, history/baseline or automatic action was added.
-26. Unit coverage was added for stable state, low-memory warning, severe/critical thermal states, battery data-quality reporting and deterministic ordering. GitHub Actions and APK inspection are pending.
+26. Unit coverage was added for stable state, low-memory warning, severe/critical thermal states, battery data-quality reporting and deterministic ordering. GitHub Actions passed; APK inspection followed after the CI checkpoint.
 27. GitHub Actions run `31317443100` passed lint, unit tests, Android 16 build, stable-certificate verification and artifact upload. Artifact `9039174070` digest: `sha256:64307230b197a03646d5b36838ef948e7db84882d243f448097f14d3faf23070`; extracted APK SHA-256: `eb87948a2b259cca9624724b491634f5ac45de9a2daa6d362f4c6c2911bd9d0b`.
+28. The milestone APK was installed over the current stable-signed app without uninstalling and inspected on the target. The diagnosis card rendered correctly: no active memory-pressure finding, one informational unavailable/rejected-voltage finding, evidence/limitations/rule version, and no automatic action.
+29. Physical snapshot values included 58% battery, 35.1 °C, 1.04 GiB available RAM, `lowMemory=false`, no current thermal restriction, and 28.26 GiB available app-data storage. These values are dynamic; the target voltage remains unavailable and must not be inferred.
 
-**Current production code:** real RAM/thermal/storage/access snapshot plus a factual battery snapshot; diagnosis-engine v1 implementation is CI-verified on the checkpoint branch but not yet physically verified or merged.
-**Verified:** diagnosis-engine v1 CI, stable certificate, previous clean install/in-place updates, previous telemetry rendering, factual battery snapshot and truthful rejection of the target's invalid voltage.
-**First unfinished point:** install the one diagnosis-engine v1 milestone APK over the current stable-signed app and inspect the diagnosis card on the target phone. Do not treat battery voltage as available on the OPPO target, and do not add health/capacity claims.
+**Current production code:** real RAM/thermal/storage/access snapshot plus a factual battery snapshot; diagnosis-engine v1 is CI-verified and physically verified on the checkpoint branch, pending merge.
+**Verified:** diagnosis-engine v1 CI and target inspection, stable certificate, previous clean install/in-place updates, previous telemetry rendering, factual battery snapshot and truthful rejection of the target's invalid voltage.
+**First unfinished point:** mark PR #8 ready, merge it, then inspect the resulting `main` HEAD and record the merge commit. Do not treat battery voltage as available on the OPPO target, and do not add health/capacity claims.

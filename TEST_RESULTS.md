@@ -147,3 +147,13 @@
 - Artifact `9039174070`; artifact digest: `sha256:64307230b197a03646d5b36838ef948e7db84882d243f448097f14d3faf23070`.
 - Extracted APK SHA-256: `eb87948a2b259cca9624724b491634f5ac45de9a2daa6d362f4c6c2911bd9d0b`.
 - Diagnosis engine v1 implementation and CI: **VERIFIED**. APK installation/inspection and target-phone physical verification: **PENDING**.
+
+## 2026-08-09 — Diagnosis engine v1 physical verification
+
+- Installed the CI artifact APK over the existing stable-signed application without uninstalling: **PASSED**.
+- Target: OPPO A60 5G, Android/ColorOS 16.0.5; application launched and retained the existing telemetry cards: **PASSED**.
+- Diagnosis card rendered: **PASSED** — three evaluated rules, no active memory-pressure finding, one informational battery-voltage data-quality finding, explicit evidence/limitation, rule version and no automatic action.
+- Target snapshot observed: 58% battery, discharging, 35.1 °C, raw current 1,038 μA, charge counter 2,749 mAh; these are point-in-time values.
+- RAM/thermal/storage context observed: 1.04 GiB available RAM, `lowMemory=false`, 93% thermal-envelope use with no current thermal restriction, 28.26 GiB app-data storage available.
+- Battery voltage remained explicitly unavailable/rejected as untrusted, consistent with the prior physical limitation. No voltage, health or capacity claim was introduced.
+- Diagnosis engine v1 target-device result: **PHYSICALLY VERIFIED**. PR #8 is ready for merge; `main` has not yet changed.
