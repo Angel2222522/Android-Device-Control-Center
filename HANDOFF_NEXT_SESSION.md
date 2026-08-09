@@ -93,3 +93,27 @@
 - The user confirmed the complete physical gate on the OPPO A60 5G. The repository must not claim numeric CPU activity or usable battery voltage on this device.
 - Storage intelligence is metadata-only and read-only. SAF remains the privacy-preserving default path; `MANAGE_EXTERNAL_STORAGE` is optional, explicit and limited to shared storage rather than private app directories.
 - Next bounded milestone proposal: personal-baseline v1 using existing local history, with insufficient-data handling and no score or automatic action.
+
+## Current handoff — 2026-08-10
+
+The notes above describe earlier merged milestones. The current handoff supersedes them for the professional branch.
+
+- Current checkout: `agent/professional-device-center`, `HEAD ab5ec60`.
+- Current code includes the multi-section home shell, app center, storage explorer, category/large/old/empty-file analysis, bounded SHA-256 duplicate confirmation, explicit private-trash/restore flow, battery and network analytics, Room history, action log, report export, history deletion and optional WorkManager snapshots.
+- Storage scans remain metadata-only and read-only. File mutation is a separate explicit flow: preview → confirmation → copy to app-private durable trash → verified source deletion; restore refuses to overwrite. This exact flow still needs target-device verification.
+- Room version 5 stores snapshot, battery, network and action-log tables. Telemetry history is capped at 120 entries; clearing telemetry deliberately preserves the action-log record of the deletion.
+- Battery analytics must be described as observed/indicative: charging observation, estimated equivalent cycles, charge-counter-derived capacity and temperature alerts are not authoritative health or wear measurements.
+- Network app attribution is valid only for unique UIDs. Shared-UID packages are marked unavailable to prevent duplicate attribution; Usage Access and Android bucket latency remain visible limitations.
+- Privacy posture: no Internet permission, account, sync or advertising; Usage Access and All Files Access remain explicit user-controlled settings. Room is not application-encrypted and exported reports may contain sensitive package names and telemetry.
+- The new professional code has not completed a successful CI run for this exact head. The latest available remote run `31335006774` for earlier remote commit `afdd539c7880b56963fef63124363bbf5e6bdf57` failed at Kotlin compilation in the network reader; do not use it as current-head evidence.
+- Local Gradle, `gradle` and `kotlinc` are unavailable in this workspace. The six newly added JVM test classes are present but not locally executed. `git diff --check` is the only local verification currently available for the documentation checkpoint.
+- No current professional-branch APK is a delivery artifact. The next artifact may be built only as a CI verification candidate; exactly one APK is handed to the user after all gates pass.
+
+### Required next gates
+
+1. Publish/update the current branch with the documentation and source commits without losing any user or agent changes.
+2. Run CI for the exact head: lint, all JVM tests, Android 16 build, signing/integrity and artifact upload.
+3. Fix every compilation, lint, test or artifact issue; repeat CI until the exact head passes.
+4. Install that exact artifact on the OPPO A60 5G and verify app inventory, permissions, light/dark UI, histories/charts, storage explorer, hash limits, explicit trash/restore, export and history deletion.
+5. Test accessibility, large fonts, back navigation, rotation/background cancellation, SAF/provider failures and persistent permission behavior.
+6. Update these five release documents with the exact passing run and physical evidence, then perform one final clean build and deliver only the resulting APK plus the concise limitations report.

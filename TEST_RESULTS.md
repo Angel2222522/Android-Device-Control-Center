@@ -263,3 +263,21 @@
 - User-confirmed target-device checks: initial and repeated refresh behavior, preserved snapshot/error behavior, local history, SAF folder selection/read-only scan/rescan, explicit settings flow, optional shared-storage scan, no destructive action and truthful unavailable CPU/voltage states.
 - PR #10 merged as `4b914cf0e41cbf15999a9c380dcad10dcbb6eac3`, PR #11 as `b1710e2ad30a27eac9e4b60590acc11159298921` and PR #12 as `815a8fb136ea0d666b83e169743f3768d85d062a`.
 - The post-merge code line is now canonical on `main`; documentation commits follow this evidence checkpoint.
+
+## 2026-08-10 — Professional Device Control Center implementation checkpoint
+
+- Current checkout: branch `agent/professional-device-center`, `HEAD ab5ec60` (`complete safety feedback and device history hardening`).
+- The branch now contains the professional multi-section UI and implementation slices for the app center, storage explorer, category/large/old/empty-file analysis, bounded SHA-256 duplicate confirmation, explicit private-trash/restore flow, battery history analytics, network history analytics, action logging, report export, telemetry-history deletion and optional WorkManager snapshots.
+- Six new JVM test classes cover network UID aggregation, app network labels, action-log presentation, empty-directory presentation, battery-history analytics and network-history comparisons. The current source tree contains 56 `@Test` methods; none of these current-head tests has executed locally because this workspace has no Gradle wrapper, `gradle` executable or `kotlinc` executable.
+- Local static check after the documentation update: **PASSED** (`git diff --check`); this is not a substitute for Gradle CI.
+- Latest available remote run: GitHub Actions run `31335006774` for the preceding remote checkpoint `afdd539c7880b56963fef63124363bbf5e6bdf57` **FAILED** at `:app:compileDebugKotlin` in `NetworkIntelligence.kt`. The current `ab5ec60` contains subsequent source fixes and additional hardening, so that failure is not being reported as a result for the current head.
+- Current-head CI (`lintDebug`, `testDebugUnitTest`, `assembleDebug`, signing/integrity and artifact upload): **NOT VERIFIED / PENDING**.
+- Current-head APK artifact: **NOT BUILT / NOT DELIVERED**. No APK from this implementation checkpoint should be treated as an intermediate or final handoff.
+- Physical OPPO A60 5G verification of the new app center, light theme, storage explorer, hash subset, destructive-action confirmation/restore, action-log deletion semantics, battery/network charts and accessibility behavior: **NOT VERIFIED / PENDING**.
+- Earlier physical acceptance of the merged PR12 checkpoint remains valid only for that older feature set; it does not verify this professional branch.
+
+### Verification vocabulary
+
+- **CI-VERIFIED** means a named GitHub Actions run passed the relevant build/test checks for the exact commit.
+- **PHYSICALLY VERIFIED** means the exact artifact was installed and exercised on the target device, with evidence recorded.
+- **IMPLEMENTED** means source code is present only; it is not a release or APK claim.

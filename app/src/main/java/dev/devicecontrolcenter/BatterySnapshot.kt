@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import java.io.File
+import java.nio.file.Files
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -33,6 +34,7 @@ object BatterySnapshotReader {
         val broadcast = context.registerReceiver(
             null,
             IntentFilter(Intent.ACTION_BATTERY_CHANGED),
+            Context.RECEIVER_EXPORTED,
         )
 
         return fromRaw(
@@ -43,10 +45,12 @@ object BatterySnapshotReader {
             temperatureTenthsCelsius = broadcast?.intExtraOrNull(BatteryManager.EXTRA_TEMPERATURE),
             voltageMillivolts = broadcast?.intExtraOrNull(BatteryManager.EXTRA_VOLTAGE),
             readIntProperty = { property ->
-                batteryManager?.getIntProperty(property) ?: Int.MIN_VALUE
+                runCatching { batteryManager?.getIntProperty(property) ?: Int.MIN_VALUE }
+                    .getOrDefault(Int.MIN_VALUE)
             },
             readLongProperty = { property ->
-                batteryManager?.getLongProperty(property) ?: Long.MIN_VALUE
+                runCatching { batteryManager?.getLongProperty(property) ?: Long.MIN_VALUE }
+                    .getOrDefault(Long.MIN_VALUE)
             },
             readSysfsVoltageMillivolts = BatteryVoltageReader::readSysfsVoltageMillivolts,
         )
@@ -73,12 +77,11 @@ object BatterySnapshotReader {
 
         return BatterySnapshot(
             levelPercent = levelPercent,
-            status = status ?: optionalIntProperty(
-                readIntProperty,
-                BatteryManager.BATTERY_PROPERTY_STATUS,
+            status = normalizeStatus(status) ?: normalizeStatus(
+                optionalIntProperty(readIntProperty, BatteryManager.BATTERY_PROPERTY_STATUS),
             ),
             plugged = plugged,
-            temperatureCelsius = temperatureTenthsCelsius?.div(10.0),
+            temperatureCelsius = normalizeTemperature(temperatureTenthsCelsius),
             voltageMillivolts = voltageReading?.millivolts,
             voltageSource = voltageReading?.source ?: BatteryVoltageSource.UNAVAILABLE_OR_REJECTED,
             currentNowMicroamps = optionalIntProperty(
@@ -92,11 +95,11 @@ object BatterySnapshotReader {
             chargeCounterMicroampHours = optionalIntProperty(
                 readIntProperty,
                 BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER,
-            ),
+            )?.takeIf { it >= 0 },
             energyCounterNanowattHours = optionalLongProperty(
                 readLongProperty,
                 BatteryManager.BATTERY_PROPERTY_ENERGY_COUNTER,
-            ),
+            )?.takeIf { it >= 0 },
         )
     }
 
@@ -111,8 +114,23 @@ object BatterySnapshotReader {
     private fun optionalLongProperty(readProperty: (Int) -> Long, property: Int): Long? =
         readProperty(property).takeUnless { it == Long.MIN_VALUE }
 
+    private fun normalizeTemperature(tenthsCelsius: Int?): Double? = tenthsCelsius
+        ?.takeIf { it in MIN_TEMPERATURE_TENTHS..MAX_TEMPERATURE_TENTHS }
+        ?.div(10.0)
+
+    private fun normalizeStatus(status: Int?): Int? = status?.takeIf {
+        it == BatteryManager.BATTERY_STATUS_UNKNOWN ||
+            it == BatteryManager.BATTERY_STATUS_CHARGING ||
+            it == BatteryManager.BATTERY_STATUS_DISCHARGING ||
+            it == BatteryManager.BATTERY_STATUS_NOT_CHARGING ||
+            it == BatteryManager.BATTERY_STATUS_FULL
+    }
+
     private fun Intent.intExtraOrNull(name: String): Int? =
         getIntExtra(name, Int.MIN_VALUE).takeUnless { it == Int.MIN_VALUE }
+
+    private const val MIN_TEMPERATURE_TENTHS = -500
+    private const val MAX_TEMPERATURE_TENTHS = 1_000
 }
 
 internal data class BatteryVoltageReading(
@@ -151,26 +169,32 @@ object BatteryVoltageReader {
 
     internal fun readSysfsVoltageMillivolts(): Int? {
         val root = File(POWER_SUPPLY_ROOT)
-        val directories = runCatching { root.listFiles()?.filter(File::isDirectory).orEmpty() }
-            .getOrDefault(emptyList())
-            .sortedWith(
-                compareBy<File> { !it.name.equals("battery", ignoreCase = true) }
-                    .thenBy { it.name },
-            )
-
-        for (directory in directories) {
-            val type = readText(File(directory, "type"))?.trim()
-            val isBattery = directory.name.equals("battery", ignoreCase = true) ||
-                type.equals("Battery", ignoreCase = true)
-            if (!isBattery) continue
-
-            val rawMicrovolts = readText(File(directory, "voltage_now"))
-                ?.trim()
-                ?.toLongOrNull()
-            normalizeSysfsMicrovolts(rawMicrovolts)?.let { return it }
+        val preferredBattery = File(root, "battery")
+        if (preferredBattery.isDirectory) {
+            readBatteryVoltage(preferredBattery)?.let { return it }
         }
 
+        val directories = runCatching { Files.newDirectoryStream(root.toPath()) }.getOrNull() ?: return null
+        directories.use { children ->
+            for (path in children) {
+                val directory = path.toFile()
+                if (!directory.isDirectory || directory.name.equals("battery", ignoreCase = true)) continue
+                readBatteryVoltage(directory)?.let { return it }
+            }
+        }
         return null
+    }
+
+    private fun readBatteryVoltage(directory: File): Int? {
+        val type = readText(File(directory, "type"))?.trim()
+        val isBattery = directory.name.equals("battery", ignoreCase = true) ||
+            type.equals("Battery", ignoreCase = true)
+        if (!isBattery) return null
+
+        val rawMicrovolts = readText(File(directory, "voltage_now"))
+            ?.trim()
+            ?.toLongOrNull()
+        return normalizeSysfsMicrovolts(rawMicrovolts)
     }
 
     private fun readText(file: File): String? = runCatching { file.readText() }.getOrNull()

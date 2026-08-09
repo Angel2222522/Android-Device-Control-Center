@@ -1,5 +1,34 @@
 # Known Limitations
 
+## Current professional branch — 2026-08-10
+
+- The audited code baseline is an implementation checkpoint, not a release claim: it is based on `4d9a1b4` plus pending local hardening/migration changes. It has not received a successful CI build/lint/test run or a complete physical-device verification pass.
+- Android's sandbox still prevents universal access to other applications' private data, live processes and exact cross-app resource attribution.
+- `QUERY_ALL_PACKAGES` improves package visibility for this local APK, but Android/OEM package visibility and package-manager behavior can still omit or describe packages imperfectly. This is an Android limitation, not a Play Store release decision.
+- All Files Access is broad shared-storage access, not root. Private app directories and protected Android paths remain outside the app's guaranteed scope.
+- SAF scans are read-only metadata scans. A separately confirmed file action copies a selected file into the app-private durable trash and then attempts to delete the original; provider write permissions, source changes and OEM behavior can still reject that action.
+- The SAF picker requests and persists read/write grants when the provider permits them; if persistence fails the URI is not retained across process death and destructive actions remain disabled.
+- Storage scanning is bounded: SAF/shared-storage scanning stops at 20,000 entries; the explorer exposes a bounded directory window; metadata can be unknown, stale or unreadable for a provider.
+- Exact duplicate detection hashes only same-size candidates, at most 1,000 files and 512 MiB per file. It is a content-confirmation tool for the checked subset, not proof that no duplicate exists outside the subset. Near-duplicate photos are not implemented.
+- The private trash has durable metadata, source fingerprints and payload files and is designed to recover across process death. Uncertain recovery is retained for review; restore still depends on the original parent being available and no conflicting destination existing. It is not a general system recycle bin and payloads are not encrypted at rest.
+- No automatic deletion, cache clearing, force-stop, CPU governor change or RAM booster is provided. The Android public API does not make those actions reliable or safe for arbitrary applications.
+- Usage and network statistics can be delayed, bucketed and OEM-dependent. Per-app network bytes are attributed only to packages with a unique UID; packages sharing a UID are explicitly marked unavailable rather than double-counted.
+- A successful App Center inventory refresh records bounded local per-package history: at most 120 samples per package and 4,096 samples globally. It stores package name, returned usage/storage/network values and availability states, not labels, permissions, paths or user content; unavailable Android metrics remain unavailable rather than inferred.
+- Battery history is local and bounded to 120 samples. Observed charging duration, indicative equivalent cycles, charge-counter-derived capacity and high-temperature alerts are estimates or observations; they are not authoritative battery health, design capacity, wear, runtime or charging-cause measurements.
+- Battery current, voltage, charge counter and energy support varies by vendor. The OPPO target rejected its broadcast voltage as physically implausible and did not expose a trusted sysfs fallback, so usable voltage remains unavailable on that device.
+- The diagnosis engine remains a current-snapshot rule set. Local history is used for battery/network presentation, but it is not yet a calibrated cross-domain baseline, causal model or universal anomaly detector.
+- CPU activity is a short-window whole-device `/proc/stat` probe when the OEM exposes valid counters; it is not CPU speed, frequency, per-app CPU attribution or proof of a performance problem. Numeric CPU activity was unavailable on the verified OPPO target.
+- Background execution is best effort. WorkManager's optional 12-hour snapshot runs only under its constraints and can be delayed by Doze, OEM battery policies or reboot state; there is no guaranteed continuous sampler or notification anomaly channel.
+- Room history and the action log remain local but are not encrypted by the application; they rely on Android/device protection. The optional DCCX v1 export uses Android Keystore AES-GCM for the final export file, is bound to the same installation/device key and has no bundled import/decryption UI or cross-device reader. Before the picker result is written, its plaintext report is staged in app-private files and is removed on completion/cancellation/failure or stale-file cleanup after seven days. Plain reports can contain package names, measurements, timestamps and action details and must be treated as sensitive.
+- The app declares no Internet permission and has no built-in account, sync or upload path. An export is nevertheless written to the user-selected document provider; if that provider syncs or shares the chosen destination, its own privacy and network behavior applies.
+- Clearing telemetry history is explicit and transactional for snapshot/battery/network tables; the action log intentionally keeps the record of the deletion. The current product does not offer selective per-row history editing.
+- No local VPN firewall, near-photo matching, reliable orphan/remnant ownership proof, encrypted Room database, home-screen widget or notification-based anomaly alert exists in this checkpoint.
+- Charts are local summaries of sampled data, not laboratory-grade time series. Sparse sampling, unavailable fields and long background gaps can make trends incomplete.
+- The current professional UI has not yet been accepted on the physical target at large font sizes, with a screen reader, or across the full destructive-action flow. These are release gates, not assumed successes.
+- The latest available remote CI run for checkpoint `46247b429e01ad521c99fda5bb996610b01592a6` (`31336454187`) failed at Kotlin compilation in `AppIntelligence.kt`; the audited code baseline's subsequent local fixes and migration changes are not yet covered by CI.
+
+Earlier entries below are historical milestone records and do not override the current-branch status above.
+
 - Android app sandbox prevents universal access to other apps' private data and live processes.
 - Package visibility and Google Play policies constrain complete installed-app inventory.
 - All Files Access is broad but not equivalent to root and is distribution-policy sensitive.
@@ -23,12 +52,12 @@
 - Local VPN firewall occupies Android's single VPN slot and can add battery/latency overhead.
 - Domain attribution is incomplete under encrypted DNS, QUIC, CDNs and shared endpoints.
 - Background execution restrictions prevent silent continuous high-frequency sampling.
-- Refresh remains user-triggered point-in-time collection with single-flight/throttle protection. Successful snapshots are now persisted locally up to 120 entries; no synchronization, export/delete workflow or historical diagnosis is implemented yet. If a later refresh fails, the app keeps the last successful snapshot; an initial failure requires a retry.
+- Refresh remains user-triggered point-in-time collection with single-flight/throttle protection. Successful snapshots are persisted locally up to 120 entries; an optional WorkManager path can add constrained periodic snapshots. There is no synchronization or fully calibrated historical diagnosis. If a later refresh fails, the app keeps the last successful snapshot; an initial failure requires a retry.
 - CI emulator success cannot prove behavior on the user's physical Android 16/OEM build.
 - Zero-cost GitHub Actions is unlimited on standard runners for public repositories; private repositories have quotas.
 - APKs signed by different certificates cannot update the same Android application ID. CI debug builds therefore require a stable development-only identity; production uses a separate protected key.
 
-- The current overview UI is not the final product design. The premium redesign is implemented, physically accepted and merged as a first baseline; additional polish remains deferred design debt.
+- The current professional UI expands the accepted premium overview into multiple sections, but the new branch has not yet completed CI, accessibility checks or full physical-device acceptance. It must not be called the final product design yet.
 
 
 ## 2026-08-09 — Premium overview v1 physical inspection and corrective iteration

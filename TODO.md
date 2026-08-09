@@ -19,7 +19,7 @@
 - [x] Remove the final ephemeral-signed installed build once.
 - [x] Verify clean installation and launch of the stable-signed APK.
 - [x] Verify a later stable-signed APK updates in place without uninstalling.
-- [ ] Establish separate production release-signing strategy without committed secrets.
+- [x] Establish separate production release-signing boundary without committed release secrets; final handoff still needs a separately protected key or an explicitly disclosed stable development signature.
 
 ## Phase 2 — Capability and permission center
 
@@ -116,10 +116,29 @@
 - [x] Add largest files, oldest files and same-size candidate groups without calling them confirmed duplicates.
 - [x] Add adaptive B/KiB/MiB/GiB size presentation and provider-size fallback behavior.
 - [x] Add optional explicitly triggered shared-storage metadata scanning after Android special access.
-- [x] Keep content hashing, deletion, movement, background scanning and automatic permission requests out of scope.
+- [x] Add bounded SHA-256 confirmation for exact duplicates after an explicit user action.
+- [x] Add explicit preview/confirmation, durable app-private trash, free-space preflight and restore without overwriting an existing destination.
+- [x] Add a bounded read-only storage explorer with cancellation, retry and back-navigation behavior.
 - [x] Pass CI, artifact integrity and target-device physical acceptance.
 - [x] Retarget and merge the canonical stack in order: PR10 → PR11 → PR12.
+
+## 2026-08-10 — Professional implementation checkpoint
+
+- [x] Add the multi-section Material 3 shell with system light/dark theme and explicit loading/empty/error states.
+- [x] Add the app center: visible package inventory, search/filter/sort, permissions, Usage Access data, storage stats and safe Android intents.
+- [x] Add battery Room history and bounded analytics for observed charging time, indicative cycles/capacity and high-temperature samples without a health claim.
+- [x] Add Wi-Fi/mobile Room history, daily/weekly comparison and unique-UID app network attribution with shared-UID uncertainty.
+- [x] Add local action log, report export, explicit telemetry-history deletion and optional 12-hour WorkManager snapshots.
+- [x] Add regression tests for storage presentation, network attribution/history, app network labels, battery analytics and action-log presentation.
+- [ ] Run a successful CI build for the audited code baseline (`4d9a1b4` plus pending local hardening/migration changes): lint, JVM tests, Android 16 debug/release verification and signing/integrity checks.
+- [ ] Install the exact CI artifact on the OPPO A60 5G and verify every new section, permission state, chart, explorer action and restore path.
+- [ ] Perform large-font, screen-reader, light/dark theme, rotation/background, provider-failure and destructive-action testing.
+- [ ] Resolve all CI/physical/accessibility findings before changing this checkpoint to release-ready.
+- [ ] Produce exactly one final APK only after the full release gate; do not hand off intermediate artifacts.
 
 ## Next bounded milestone proposal
 
 - [ ] Personal-baseline v1: read-only comparison against existing local history, with a minimum-sample state and explicit evidence. No score, causal certainty, health claim or automatic action.
+- [ ] Near-duplicate photo matching, orphan/remnant evidence model and selective history views remain separate milestones.
+- [x] Add optional encrypted DCCX export with Android Keystore AES-GCM; Room-at-rest encryption remains a separate limitation.
+- [ ] Evaluate encrypted Room storage, widget and notification alerts only after the core release gate is stable.
