@@ -10,8 +10,9 @@
 8. Official semantics are verified: headroom 1.0 is the severe-throttling threshold; 1.02 is at/above it.
 9. PR #4 corrected the counterintuitive wording, passed CI run `31313577829`, and merged as `0be0590673d079eb761fc56a288d915059282b91`.
 10. The PR #4 APK installed over the existing stable-signed app without uninstalling; corrected wording rendered successfully in screenshot evidence.
-11. Compare RAM/storage values with Android system information.
+11. OEM comparison completed: OPPO shows 4 GB physical + 4 GB storage-backed expansion and 128 GB advertised storage; app APIs returned 3.53 GiB kernel-accessible RAM and 101.76 GiB app-data filesystem.
+12. PR #5 added `advertisedMem`, separated advertised/kernel-accessible RAM, corrected storage labels, passed CI run `31314062520`, and merged as `addd31b6b2ded85b56968f8456578a882014e003`.
 
 **Current production code:** real RAM/thermal/storage/access snapshot; no diagnosis engine.  
 **Verified:** CI, stable certificate, clean install, launch and telemetry rendering.  
-**First unfinished point:** compare displayed RAM/storage values with Android system information, then continue Phase 2 capability work.
+**First unfinished point:** physically verify the PR #5 RAM/storage truth labels.
