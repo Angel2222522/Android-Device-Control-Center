@@ -31,4 +31,17 @@ class FoundationTest {
             SnapshotPresentation.thermalEnvelopeLabel(1.02f),
         )
     }
+
+    @Test
+    fun memoryDetailSeparatesAdvertisedFromKernelAccessibleRam() {
+        assertEquals(
+            "Εγκατεστημένη φυσική RAM 4.00 GB · Προσβάσιμη στον πυρήνα 3.53 GB · " +
+                "Όριο χαμηλής μνήμης 0.42 GB",
+            SnapshotPresentation.memoryDetail(
+                advertisedBytes = 4L * 1_073_741_824L,
+                kernelBytes = 3_790_259_077L,
+                thresholdBytes = 450_971_566L,
+            ),
+        )
+    }
 }
