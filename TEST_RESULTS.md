@@ -48,3 +48,12 @@
 - Merge commit: `0be0590673d079eb761fc56a288d915059282b91`.
 - Corrected physical rendering: **UNVERIFIED**.
 - In-place APK update: **UNVERIFIED**.
+
+## 2026-08-09 — Stable-signing in-place update and corrected UI
+
+- Procedure: installed `Device-Control-Center-thermal-semantics-update.apk` directly over the existing stable-signed Phase 2 app without uninstalling.
+- In-place Android package update: **PASSED**.
+- Application launch after update: **PASSED**.
+- Corrected thermal wording rendered: **PASSED**, screenshot evidence retained.
+- Observed after update: RAM 3.53 GB total / 1.03 GB available / low-memory flag false; thermal status severe; thermal-envelope use 107%; storage 101.76 GB total / 28.46 GB available.
+- Stable development-signing solution: **PHYSICALLY VERIFIED ACROSS SUCCESSIVE BUILDS**.
