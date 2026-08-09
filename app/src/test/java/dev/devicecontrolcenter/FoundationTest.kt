@@ -80,7 +80,7 @@ class FoundationTest {
         assertEquals(80, snapshot.levelPercent)
         assertEquals(android.os.BatteryManager.BATTERY_STATUS_CHARGING, snapshot.status)
         assertEquals(2, snapshot.plugged)
-        assertEquals(27.5, snapshot.temperatureCelsius, 0.001)
+        assertEquals(27.5, checkNotNull(snapshot.temperatureCelsius), 0.001)
         assertEquals(4_200, snapshot.voltageMillivolts)
         assertEquals(1_500_000, snapshot.currentNowMicroamps)
         assertEquals(1_200_000, snapshot.currentAverageMicroamps)
