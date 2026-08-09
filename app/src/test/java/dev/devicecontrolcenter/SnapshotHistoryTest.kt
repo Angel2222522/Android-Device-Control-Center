@@ -40,7 +40,7 @@ class SnapshotHistoryTest {
         assertEquals(1_200_000_000L, entity.availableMemoryBytes)
         assertEquals(28_000_000_000L, entity.availableStorageBytes)
         assertEquals(53, entity.batteryLevelPercent)
-        assertEquals(37.1, entity.batteryTemperatureCelsius, 0.0)
+        assertEquals(37.1, entity.batteryTemperatureCelsius ?: Double.NaN, 0.0)
         assertEquals(0.94f, entity.thermalHeadroom)
         assertNull(entity.cpuActivityPercent)
     }
