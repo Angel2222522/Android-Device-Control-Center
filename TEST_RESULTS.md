@@ -69,3 +69,14 @@
 - PR #5; head `fd4a7dea3f9c84b0be80d9dc1972c5494c8027c0`; CI run `31314062520`: build/lint/tests/certificate/artifact **PASSED**.
 - Merge commit: `addd31b6b2ded85b56968f8456578a882014e003`.
 - Physical rendering of new split labels: **UNVERIFIED**.
+
+## 2026-08-09 — GB/GiB unit defect and correction
+
+- Physical PR #5 rendering: **PASSED**, but exposed a presentation defect.
+- Observed `advertisedMem`: 4,000,000,000 bytes, rendered as 3.73 “GB”.
+- Root cause: formatter divided by 2^30 (GiB) but used the suffix GB.
+- Correct expectation: 4.00 GB decimal = 3.73 GiB binary.
+- PR #6 head `ced43516093e2072dde0db46e6abe3ac6d58b15d`; CI run `31314345629`.
+- Build, lint, unit tests, certificate verification and artifact: **PASSED**.
+- Merge commit: `4b9ed5d14b7f5d08f081e924bf8ec20700912c3c`.
+- Corrected physical rendering: **UNVERIFIED**.
