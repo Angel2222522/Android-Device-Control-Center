@@ -56,7 +56,7 @@ class PersonalBaselineTest {
             "Τώρα 0.50 GiB · διάμεσος 3.00 GiB · εύρος 1.00 GiB–5.00 GiB",
             PersonalBaselinePresentation.memoryEvidence(metric),
         )
-        assertTrue(PersonalBaselinePresentation.limitation().contains("δεν είναι score"))
+        assertTrue(PersonalBaselinePresentation.limitation().contains("δεν είναι βαθμολογία"))
     }
 
     @Test
@@ -77,7 +77,7 @@ class PersonalBaselineTest {
         )
 
         assertEquals(
-            "Τώρα: όχι · 2/5 προηγούμενα με Android low-memory flag",
+            "Τώρα: όχι · 2/5 προηγούμενα με ένδειξη χαμηλής μνήμης Android",
             PersonalBaselinePresentation.lowMemoryEvidence(result),
         )
         assertEquals(
