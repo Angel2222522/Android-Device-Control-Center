@@ -71,6 +71,11 @@
 - **Why:** OPPO reports 4 GB physical + 4 GB storage-backed expansion as an 8 GB combined pool, while Android reports 3.53 GiB accessible to the kernel. These values answer different questions.
 - **Storage rule:** A `StatFs` reading of the data filesystem is labelled as app-data capacity, not the device's marketed 128 GB capacity.
 
+## D-014 — Units are part of measurement truth
+
+- **Decision:** Use decimal GB for marketed/advertised capacity and binary GiB for values divided by 2^30. When useful, show both.
+- **Why:** The target device exposed that 4,000,000,000 bytes is 4.00 GB but 3.73 GiB. Labelling a GiB calculation as GB is a factual error.
+
 ## Open product decisions
 
 - SAF/MediaStore-first versus broad All Files Access posture.
