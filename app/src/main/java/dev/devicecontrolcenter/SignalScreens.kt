@@ -72,7 +72,7 @@ fun SignalsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .horizontalScroll(rememberScrollState())
-                    .selectableGroup(),
+                    .semantics { selectableGroup() },
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 FilterChip(selected = selectedTab == SignalTab.BATTERY, onClick = { selectedTab = SignalTab.BATTERY }, label = { Text("Μπαταρία") })
