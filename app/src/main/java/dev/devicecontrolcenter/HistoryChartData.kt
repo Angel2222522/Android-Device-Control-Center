@@ -14,7 +14,6 @@ object HistoryChartData {
         history: List<SnapshotHistoryEntity>,
     ): List<HistoryChartPoint> {
         val previous = history
-            .asSequence()
             .filter { currentCapturedAtMillis == null || it.capturedAtMillis != currentCapturedAtMillis }
             .sortedBy { it.capturedAtMillis }
             .takeLast(23)
