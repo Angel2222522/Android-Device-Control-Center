@@ -19,6 +19,10 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    sourceSets {
+        getByName("androidTest").assets.srcDir("$projectDir/schemas")
+    }
+
     signingConfigs {
         // This repository-pinned key is deliberately development-only. It keeps
         // CI debug installs upgrade-compatible; it must never sign a release.
