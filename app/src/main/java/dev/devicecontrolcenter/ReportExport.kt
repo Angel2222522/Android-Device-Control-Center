@@ -161,7 +161,11 @@ object PendingReportExportStore {
 
     fun create(context: Context, kind: PendingReportExportKind, content: String): String {
         val bytes = content.toByteArray(StandardCharsets.UTF_8)
-        require(bytes.size <= MAX_STAGED_BYTES) {
+        val maxBytes = when (kind) {
+            PendingReportExportKind.PLAIN -> MAX_STAGED_BYTES
+            PendingReportExportKind.ENCRYPTED -> EncryptedReportExport.MAX_PLAINTEXT_BYTES
+        }
+        require(bytes.size <= maxBytes) {
             "Η αναφορά είναι μεγαλύτερη από το όριο των 8 MiB."
         }
 
@@ -307,10 +311,9 @@ object ReportExportWriter {
                 }
             } ?: error("Δεν ήταν δυνατή η εγγραφή της αναφοράς.")
         } catch (error: Throwable) {
-            // CreateDocument normally returns a new document. If writing fails,
-            // best-effort deletion prevents a partially written export from being
-            // mistaken for a successful report; providers may legitimately reject it.
-            runCatching { context.contentResolver.delete(uri, null, null) }
+            // The URI is selected by the user and may refer to an existing document.
+            // Never delete it on a provider or flush failure; an incomplete destination
+            // must remain recoverable for the user to inspect or replace explicitly.
             throw error
         }
     }
@@ -322,7 +325,7 @@ object ReportExportWriter {
  * DCCX v1 binary format (big-endian): magic `DCCX`, one-byte format version,
  * one-byte algorithm id, one-byte IV length, IV, four-byte ciphertext length,
  * and AES-GCM ciphertext including its authentication tag. The UTF-8 report is
- * limited to 8 MiB before encryption so the export remains bounded in memory.
+ * limited so the complete encrypted output, including its format overhead, remains within 8 MiB.
  * The Keystore key is app/device-bound; this export is not intended to be
  * decrypted on another device or after the key is invalidated.
  */
@@ -334,8 +337,14 @@ object EncryptedReportExport {
     private const val MAGIC = 0x44434358 // ASCII DCCX
     private const val FORMAT_VERSION = 1
     private const val AES_GCM_ALGORITHM_ID = 1
-    private const val MAX_PLAINTEXT_BYTES = 8 * 1024 * 1024
     private const val EXPECTED_IV_BYTES = 12
+    private const val AES_GCM_TAG_BYTES = 16
+    private const val FIXED_HEADER_BYTES = 4 + 1 + 1 + 1 + 4
+
+    /** Maximum UTF-8 report size that still produces an 8 MiB-or-smaller DCCX file. */
+    const val MAX_PLAINTEXT_BYTES =
+        PendingReportExportStore.MAX_STAGED_BYTES -
+            FIXED_HEADER_BYTES - EXPECTED_IV_BYTES - AES_GCM_TAG_BYTES
 
     fun encrypt(report: String): ByteArray {
         val plaintext = report.toByteArray(StandardCharsets.UTF_8)
