@@ -51,3 +51,10 @@ Status means documentation-level feasibility as of 2026-08-09. It does **not** m
 | Explainable diagnosis | Yes | Depends on input collectors | Better evidence | Better evidence | Causality remains probabilistic | Medium/High | VERIFIED |
 | Before/after action measurement | Yes for measurable signals | Depends on action | Yes | Yes | Confounders/time delay | High with protocol | VERIFIED |
 
+## Implementation checkpoint — 2026-08-09
+
+- Local successful snapshot history: implemented in Room, capped at 120 entries, physically accepted on the target; historical baseline/anomaly analysis is not implemented.
+- Scoped storage intelligence: implemented as read-only metadata scanning for an explicitly selected SAF folder; physically accepted on the target within provider/device limits.
+- Shared-storage scan: implemented behind an explicit optional `MANAGE_EXTERNAL_STORAGE` flow; this is shared-storage metadata access, not root or private app-directory access.
+- Exact duplicate detection: not implemented in this milestone. Same-size groups are displayed as candidates only; no content hashing or destructive action exists.
+- The table above remains a feasibility matrix. The implementation checkpoint is separate so feasibility status is not mistaken for full product completion.
