@@ -13,4 +13,4 @@
 - Background execution restrictions prevent silent continuous high-frequency sampling.
 - CI emulator success cannot prove behavior on the user's physical Android 16/OEM build.
 - Zero-cost GitHub Actions is unlimited on standard runners for public repositories; private repositories have quotas.
-
+- APKs signed by different certificates cannot update the same Android application ID. CI debug builds therefore require a stable development-only identity; production uses a separate protected key.

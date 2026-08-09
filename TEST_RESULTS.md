@@ -40,3 +40,13 @@ Future entries must include date, commit SHA, environment/device, exact command 
 - APK SHA-256: `6e21c96474ee91f202c237b8300790a1b97b6877b8274640b4986ada01839563`.
 - APK size: `27,014,110` bytes.
 - Target-device telemetry values and rendering: **UNVERIFIED**.
+
+## 2026-08-09 — Physical update failure
+
+- Attempt: install Phase 2 APK over the Phase 1 APK.
+- Result: **FAILED**.
+- Android message: package conflicts with an existing package.
+- Root cause: GitHub-hosted runners generated different ephemeral debug signing certificates for builds with the same application ID.
+- Application code/telemetry was not launched, so Phase 2 remains physically unverified.
+- Corrective action: repository-pinned development-only debug keystore; production signing remains separate.
+- Required verification: CI signature inspection, clean install after removing the old APK, then installation of a subsequent debug build without uninstalling.

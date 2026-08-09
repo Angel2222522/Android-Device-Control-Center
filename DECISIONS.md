@@ -53,6 +53,12 @@
 - **Decision:** The canonical repository is public: `Angel2222522/Android-Device-Control-Center`.
 - **Why:** Permanent zero-cost standard GitHub Actions and transparent development.
 
+## D-011 — Stable public debug signing identity
+
+- **Decision:** CI debug APKs use one repository-pinned development-only keystore. Its credentials are intentionally non-secret Android debug defaults.
+- **Why:** Ephemeral GitHub runners otherwise generate different debug certificates, causing Android to reject installation over the previous build.
+- **Boundary:** This key must never sign a production release. Release signing will use a separate protected keystore and secrets.
+
 ## Open product decisions
 
 - SAF/MediaStore-first versus broad All Files Access posture.

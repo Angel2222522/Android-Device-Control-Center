@@ -21,6 +21,10 @@
 - [ ] Define physical Android 16 checkpoint procedure.
 - [x] Verify debug APK installation and launch on target Android 16 phone.
 - [ ] Establish release signing strategy without committing secrets.
+- [ ] CI-verify stable development-only debug signing.
+- [ ] User uninstalls the final ephemeral-signed foundation APK once.
+- [ ] Verify clean installation of the stable-signed APK.
+- [ ] Verify a later stable-signed APK updates in place without uninstalling.
 
 ## Phase 2 — Capability and permission center
 
