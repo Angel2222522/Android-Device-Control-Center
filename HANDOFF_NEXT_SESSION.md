@@ -9,9 +9,9 @@
 7. Physical observations: RAM 3.53 GB total / 1.13 GB available / 0.42 GB low threshold / low flag false; storage 101.76 GB total / 28.54 GB available; thermal headroom 1.02 with “serious” label; special accesses not granted.
 8. Official semantics are verified: headroom 1.0 is the severe-throttling threshold; 1.02 is at/above it.
 9. PR #4 corrected the counterintuitive wording, passed CI run `31313577829`, and merged as `0be0590673d079eb761fc56a288d915059282b91`.
-10. Download the PR #4 artifact and verify it installs over the current stable-signed app without uninstalling; inspect the corrected thermal wording.
+10. The PR #4 APK installed over the existing stable-signed app without uninstalling; corrected wording rendered successfully in screenshot evidence.
 11. Compare RAM/storage values with Android system information.
 
 **Current production code:** real RAM/thermal/storage/access snapshot; no diagnosis engine.  
 **Verified:** CI, stable certificate, clean install, launch and telemetry rendering.  
-**First unfinished point:** physically verify the in-place update and corrected thermal presentation.
+**First unfinished point:** compare displayed RAM/storage values with Android system information, then continue Phase 2 capability work.
