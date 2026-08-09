@@ -36,3 +36,15 @@
 - Thermal severity interpretation against official semantics/device behavior: **UNVERIFIED**.
 - Comparison with Android system-information values: **UNVERIFIED**.
 - Subsequent in-place stable-signed update: **UNVERIFIED**.
+
+## 2026-08-09 — Thermal semantics correction
+
+- Official Android `PowerManager` documentation: **VERIFIED**.
+- Finding: `getThermalHeadroom(0)` returns thermal-envelope use; `1.0` is the severe-throttling threshold and values may exceed it.
+- Initial wording “Θερμικό περιθώριο” was technically counterintuitive and recorded as a presentation defect.
+- PR #4 head: `c392add0f55cd641e138d346797307415eb4b3f1`.
+- GitHub Actions run: `31313577829`.
+- Build, lint, unit tests, stable-certificate verification and artifact upload: **PASSED**.
+- Merge commit: `0be0590673d079eb761fc56a288d915059282b91`.
+- Corrected physical rendering: **UNVERIFIED**.
+- In-place APK update: **UNVERIFIED**.
