@@ -2,7 +2,7 @@
 
 **Updated:** 2026-08-09  
 **Phase:** 2 — capability and permission center  
-**Production code:** real device snapshot collector; diagnosis engine not started
+**Production code:** real device and battery snapshot collectors; diagnosis engine not started
 
 ## Completed
 
@@ -20,6 +20,7 @@
 - Screenshot evidence confirms rendering of real RAM, thermal, storage and access-state values.
 - Official PowerManager semantics verified: headroom 1.0 is the severe-throttling threshold; 1.02 is at/above that threshold.
 - Thermal wording corrected in PR #4 and CI-verified in run `31313577829`; merged as `0be0590673d079eb761fc56a288d915059282b91`.
+- Factual battery snapshot implemented in PR #7. It uses the standard Android battery broadcast plus optional `BatteryManager` properties, with explicit unavailable states and no health/optimisation claims. The target's invalid voltage was rejected correctly in the second physical inspection; the truthful battery snapshot milestone is now physically verified, with voltage unavailable on this device.
 
 ## Physical Phase 2 observations
 
@@ -35,11 +36,16 @@
 
 Clean installation, stable-signed in-place updating, telemetry rendering, corrected thermal wording and thermal API semantics are all physically verified. Comparison with OEM settings is complete. Physical rendering exposed a GB/GiB labelling defect: binary GiB values were labelled GB. PR #6 corrected the unit system, passed CI run `31314345629`, and merged as `4b9ed5d14b7f5d08f081e924bf8ec20700912c3c`. Corrected physical rendering is now VERIFIED by user screenshots: 4.00 GB (3.73 GiB), 3.53 GiB kernel-accessible, 1.08 GiB available; storage 28.37 GiB available / 101.76 GiB app-data filesystem. The thermal signal remains dynamic and showed 106% in this capture.
 
+The first battery checkpoint was installed and inspected on the OPPO target. Level, status/source, temperature and charge-counter rendering appeared as live values, but the Android battery broadcast returned `3 mV (0.003 V)`, which is physically implausible for a live phone. The corrected checkpoint rejects that value, reports the voltage as unavailable with explicit provenance, and does not fabricate `3000 mV`. The second physical inspection passed this behavior: 62% level, discharging, 35.8 °C, 762 μA raw current and 2,943 mAh charge counter were rendered; values are dynamic and no health/capacity estimate is claimed. The target has no verified voltage source because the standard sysfs fallback was unavailable.
+
+The corrected checkpoint is commit `fff926687aeec0b4c2e7058c3efe80060a6e0eb`, CI run `31316180145`, artifact `9038822328`, extracted APK SHA-256 `f8e87d4e2681c2bb329df814b32b2c61bd779b08275a210a39f6af043e8231c`.
+
 ## Verification language
 
 - Matrix `VERIFIED` = feasibility supported by current documentation/reference evidence.
 - Implementation `VERIFIED` requires build + tests + inspected result.
 - Foundation build pipeline and physical launch are VERIFIED.
 - Phase 2 telemetry collection/rendering is PHYSICALLY VERIFIED; corrected thermal presentation is PHYSICALLY VERIFIED.
+- Battery snapshot implementation and truthful unavailable-voltage handling are PHYSICALLY VERIFIED. A usable voltage measurement is NOT AVAILABLE on this target; the rejected vendor value is not presented as a measurement.
 - No diagnosis or optimization action exists yet.
 - Stable debug signing, clean installation and subsequent in-place update are PHYSICALLY VERIFIED.

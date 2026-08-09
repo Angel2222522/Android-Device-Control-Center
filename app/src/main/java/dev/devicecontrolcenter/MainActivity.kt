@@ -64,11 +64,17 @@ private fun CapabilityScreen(snapshot: DeviceSnapshot) {
                 status = if (snapshot.isLowMemory) "Υπάρχει πίεση μνήμης" else "Δεν αναφέρεται χαμηλή μνήμη",
             )
             MetricCard(
-                title = "Επεξεργαστής και θερμοκρασία",
+                title = "Θερμική κατάσταση",
                 primary = SnapshotPresentation.thermalLabel(snapshot.thermalStatus),
                 detail = snapshot.thermalHeadroom?.let(SnapshotPresentation::thermalEnvelopeLabel)
                     ?: "Η συσκευή δεν επέστρεψε μέτρηση θερμικού ορίου τώρα",
                 status = "Δεν γίνεται ακόμη απόδοση αιτίας σε εφαρμογή",
+            )
+            MetricCard(
+                title = "Μπαταρία",
+                primary = BatteryPresentation.levelLabel(snapshot.battery.levelPercent),
+                detail = BatteryPresentation.technicalDetail(snapshot.battery),
+                status = "Δεν εκτιμάται ακόμη η υγεία ή η πραγματική χωρητικότητα",
             )
             MetricCard(
                 title = "Χώρος δεδομένων εφαρμογών",

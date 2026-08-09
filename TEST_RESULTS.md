@@ -89,3 +89,43 @@
 - Thermal capture: 106% thermal-envelope use and severe thermal restriction; values are dynamic.
 - Screenshot evidence: user-provided and archived in the project evidence folder.
 - GB/GiB presentation milestone: **PHYSICALLY VERIFIED**.
+
+## 2026-08-09 — Battery factual snapshot implementation
+
+- Official Android `BatteryManager` reference and Android 16/AOSP battery-service semantics: **VERIFIED**.
+- Confirmed units: battery temperature broadcast is in tenths of a degree Celsius; voltage is in millivolts; current properties are in microamperes with positive meaning net current entering the battery and negative meaning net discharge; charge counter is in microampere-hours; energy counter is in nanowatt-hours.
+- PR #7 head `ebdb8b289c27f472516865c5f839668e02bd65f7` initially failed CI run `31315368065` at unit-test compilation because one nullable `Double` was passed to a non-null assertion overload. No production compilation error occurred.
+- Corrective commit `9ffe70d5a240c7d4e8e5e64c39bbafb4f3e829eb` fixed the test assertion.
+- CI run `31315477707`: lint, unit tests, Android 16 build, stable certificate verification and artifact upload **PASSED**.
+- Battery tests cover level conversion, status/source labels, unit conversions and unsupported-property handling.
+- Artifact ID: `9038613946`; artifact digest: `sha256:7a4a12b561bf07ce81453dd663709a5c563efdedc47c8dac8f2a05fb00852bc8`.
+- Extracted APK SHA-256: `9f8ee46e05793606f33fe1959a7b7e94c4ae8ea246603f02a73954706ee97480`.
+- Physical installation and inspection on the target OPPO Android 16 phone was pending at the time of this CI checkpoint; the subsequent target inspection is recorded below.
+
+## 2026-08-09 — Battery checkpoint physical inspection
+
+- Installed the stable-signed PR #7 checkpoint APK over the existing app: **PASSED**.
+- Target: OPPO A60 5G, Android/ColorOS 16.0.5; app launched and rendered the battery card: **PASSED**.
+- Physically observed: 66% level, discharging state, battery source, 36.3 °C temperature and 3,108 mAh charge counter. These are observed snapshot values, not battery-health or full-capacity estimates.
+- Voltage returned by the Android battery broadcast: `3 mV (0.003 V)`. This is physically implausible for a live phone and is **FAILED / NOT VERIFIED**.
+- Current returned: `929 μA (0.93 mA)` while the status was discharging. It is retained as a raw vendor sensor value; no drain direction or causal conclusion is claimed.
+- Decision: do not merge PR #7. Add plausibility validation, a standard read-only `power_supply` sysfs fallback where accessible, explicit voltage provenance and an unavailable state when no trusted value exists. No heuristic `3 -> 3000 mV` conversion will be added.
+
+## 2026-08-09 — Battery voltage validation correction CI
+
+- Corrective commit: `fff926687aeec0b4c2e7058c3efe80060a6e0eb`.
+- Added plausibility gating for broadcast voltage, standard read-only `power_supply` sysfs μV fallback, source provenance and explicit unavailable/rejected rendering.
+- Added regression tests for the observed `3 mV` case, trusted sysfs fallback and no-fallback behavior.
+- GitHub Actions run `31316180145`: lint, unit tests, Android 16 build, stable certificate verification and artifact upload **PASSED**.
+- Artifact ID `9038822328`; artifact digest `sha256:1c592e07f4d7c1216407c74431e65790aa380b743383dc8801786a3e920a2d02`.
+- Extracted corrected APK SHA-256: `f8e87d4e2681c2bb329df814b32b2c61bd779b08275a210a39f6af043e8231c`.
+
+## 2026-08-09 — Battery corrected checkpoint physical verification
+
+- Installed the corrected stable-signed APK over the existing app without uninstalling: **PASSED**.
+- Target screenshot: OPPO A60 5G, Android/ColorOS 16.0.5; application launched and retained the existing RAM, thermal, storage and access-state cards: **PASSED**.
+- Battery snapshot rendered: 62% level, discharging, battery source, 35.8 °C, instantaneous raw current `762 μA (0.76 mA)`, charge counter `2,943 mAh`; values are point-in-time and dynamic.
+- Invalid broadcast voltage path: **PASSED** — the prior `3 mV` value is no longer displayed as a measurement. The UI shows `Τάση: μη διαθέσιμη` and identifies the source as unavailable/rejected as untrusted.
+- Trusted voltage measurement on this target: **NOT AVAILABLE**. The read-only sysfs fallback did not provide a usable value. No voltage value is claimed.
+- Battery factual snapshot and truthful unavailable-state handling: **PHYSICALLY VERIFIED**.
+- Battery health, true capacity and drain-direction interpretation remain intentionally unimplemented.

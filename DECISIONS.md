@@ -76,6 +76,20 @@
 - **Decision:** Use decimal GB for marketed/advertised capacity and binary GiB for values divided by 2^30. When useful, show both.
 - **Why:** The target device exposed that 4,000,000,000 bytes is 4.00 GB but 3.73 GiB. Labelling a GiB calculation as GB is a factual error.
 
+## D-015 — Factual battery snapshot boundaries
+
+- **Decision:** Battery telemetry starts with the standard sticky battery broadcast and optional `BatteryManager` properties. Missing or unsupported properties remain unavailable; they are never replaced with zero or a fabricated estimate.
+- **Units:** Temperature is displayed in °C after converting the broadcast's tenths-of-a-degree-Celsius value; voltage in mV; current in μA/mA with the Android sign convention; charge counter in μAh/mAh; energy counter in nWh/Wh.
+- **Rejected:** Battery-health percentage, full-capacity claim, universal charging-time claim or optimisation action before a qualified multi-session evidence model exists.
+- **Why:** The public APIs expose current state and optional fuel-gauge readings, not an authoritative universal health value. Vendor support and sensor semantics vary.
+
+## D-016 — Reject untrusted battery voltage
+
+- **Decision:** Accept Android's battery-broadcast voltage only inside a conservative plausible phone-battery range. If it fails validation, try the standard read-only `power_supply` sysfs `voltage_now` source in μV and convert it to mV. Preserve the source in the snapshot.
+- **Rejected:** Converting an OEM value such as `3` to `3000 mV` by heuristic. If no trusted source is available, show `μη διαθέσιμη` and explain that the value was rejected or absent.
+- **Why:** The target OPPO returned `3 mV (0.003 V)` for a live phone. The official Android/AOSP contract describes the broadcast voltage as mV and the standard power-supply voltage file as μV, but the target's observed value violates the expected physical range. Truthful unavailability is safer than a plausible-looking fabricated conversion.
+- **Physical result:** The corrected APK rejected the target value and displayed an explicit unavailable state. This handling is verified; a usable voltage measurement is not available on the target device.
+
 ## Open product decisions
 
 - SAF/MediaStore-first versus broad All Files Access posture.

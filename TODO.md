@@ -38,3 +38,19 @@
 - [x] Physically inspect the new RAM/storage truth labels.
 - [x] Identify and correct decimal GB versus binary GiB labelling defect.
 - [x] Physically verify corrected GB/GiB rendering.
+
+## Phase 2 — Battery factual snapshot
+
+- [x] Verify official Android 16 battery API semantics and units.
+- [x] Implement standard battery broadcast snapshot with optional `BatteryManager` properties.
+- [x] Add explicit unavailable states and avoid battery-health/capacity claims.
+- [x] Add unit tests for battery conversion, labels and unsupported properties.
+- [x] Pass CI build, lint, unit tests, stable certificate verification and artifact upload.
+- [x] Install the first milestone APK over the current stable-signed app and inspect the battery card.
+- [x] Confirm level, status/source, temperature and charge-counter rendering on the target phone.
+- [x] Detect and record the target device's physically implausible `3 mV` voltage result; keep it unverified.
+- [x] Implement plausibility gating, source provenance and standard read-only `power_supply` fallback for voltage.
+- [x] Build and CI-verify the corrected battery checkpoint APK.
+- [x] Install the corrected APK over the current version and re-test the battery voltage path.
+- [x] Physically verify explicit unavailable voltage handling when no trusted source exists.
+- [x] Physically verify the factual battery snapshot rendering and merge PR #7.
