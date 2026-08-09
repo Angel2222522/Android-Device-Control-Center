@@ -59,6 +59,12 @@
 - **Why:** Ephemeral GitHub runners otherwise generate different debug certificates, causing Android to reject installation over the previous build.
 - **Boundary:** This key must never sign a production release. Release signing will use a separate protected keystore and secrets.
 
+## D-012 — Translate API semantics, not API names
+
+- **Decision:** Present thermal headroom as thermal-envelope use with an explicit 100% severe-throttling threshold.
+- **Why:** The official API name “headroom” is counterintuitive because larger returned values mean less safety, not more.
+- **Rejected:** Exposing the raw 1.02 value as unexplained “thermal headroom”.
+
 ## Open product decisions
 
 - SAF/MediaStore-first versus broad All Files Access posture.
