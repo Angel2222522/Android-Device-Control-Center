@@ -96,11 +96,14 @@
 
 - [x] Record the premium, distinctive and emotionally compelling design direction.
 - [x] Record the current overview's visual debt and the physical-device acceptance gate.
-- [ ] Define and implement a coherent visual language for the existing overview.
-- [ ] Make the first viewport communicate primary device state and attention item within seconds.
-- [ ] Replace uniform information walls with a clear scan-first hierarchy and progressive disclosure.
-- [ ] Preserve truthful measurements, provenance, limitations and unavailable states.
-- [ ] Add only presentation/state tests required by the redesign; do not add new capability scope.
-- [ ] Pass lint, unit tests, Android 16 build, signing verification and GitHub Actions.
-- [ ] Install and visually inspect the design milestone on the OPPO A60 5G.
-- [ ] Accept the first design milestone only after physical visual inspection and user review.
+- [x] Define and implement a coherent visual language for the existing overview.
+- [x] Make the first viewport communicate primary device state and attention item within seconds.
+- [x] Replace uniform information walls with a clear scan-first hierarchy and progressive disclosure.
+- [x] Preserve truthful measurements, provenance, limitations and unavailable states.
+- [x] Add only presentation/state tests required by the redesign; do not add new capability scope.
+- [x] Pass lint, unit tests, Android 16 build, signing verification and GitHub Actions.
+- [x] Install and visually inspect the first design candidate on the OPPO A60 5G; record the presentation defects found.
+- [x] Re-install and visually inspect the corrective design candidate on the OPPO A60 5G.
+
+- [x] Accept the design milestone as the first baseline after corrective physical inspection and user review.
+- [ ] Revisit premium design polish in a later phase after functional milestones progress.

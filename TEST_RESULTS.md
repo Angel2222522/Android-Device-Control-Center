@@ -215,3 +215,41 @@
 - This is a documentation-only product-direction checkpoint; no production code was changed.
 - No new test, lint, build, APK or CI result is claimed for this note.
 - The next design/UX v1 milestone will require implementation, automated validation, APK inspection and physical visual inspection on the OPPO target before acceptance.
+
+## 2026-08-09 — Premium overview design/UX v1 CI checkpoint
+
+- Production UI changes: premium dark visual system, status hero, compact metric tiles, semantic state colors and progressive disclosure for technical details.
+- Production data collectors, diagnosis rules and snapshot lifecycle were not changed.
+- Added OverviewPresentationTest for warning, critical, data-quality-only and neutral overview states.
+- Local git diff --check: PASSED.
+- Local Gradle execution: NOT RUN because Gradle is unavailable in the inspection workspace.
+- GitHub Actions run 31321637219: lint, unit tests, Android 16 build, stable certificate verification and artifact upload PASSED.
+- Artifact 9040353819; ZIP digest: sha256:18ad6ea8c6eb2287bb15221d28376b9864619b3a354f92d9fdfd30d7a9b38636.
+- Complete APK: 27,259,870 bytes; SHA-256: f795026281bdf57a1c1cddb9a943930a8c3e3c50a125376da5f03c5888fb7024.
+- ZIP and APK archive integrity checks: PASSED.
+- Physical visual inspection on the OPPO target: PENDING; do not call the design VERIFIED or merged.
+
+
+## 2026-08-09 — Premium overview v1 physical inspection and corrective iteration
+
+- The first candidate was installed and visually inspected on the OPPO A60 5G through user-supplied screenshots.
+- The dark visual system, status hero, metric grid and compact surfaces rendered successfully.
+- The first visual checkpoint was **NOT ACCEPTED** because the last-capture time, thermal tile value, CPU supporting text and second special-access badge were visibly truncated.
+- The hero wording “Χωρίς ενεργή πίεση” also conflicted with the diagnosis summary showing one informational condition. This was a presentation defect, not a collector, diagnosis or data-integrity defect.
+- Corrective code commit: `97b8ac57e0361b6b75f98c6dc41fe2628a772e7d`.
+- Corrective changes shorten only compact UI copy, remove lossy ellipsis from important metric values/supporting text, give access-row labels constrained space, use a compact capture-time label and align the informative headline with the diagnosis state.
+- GitHub Actions run `31322315102` passed lint, unit tests, Android 16 build, stable-certificate verification and artifact upload.
+- Corrective artifact `9040538004` has ZIP digest `sha256:1725f6a07b5980224efa7785c298268bb0ae0c23690ca657b06e7fc8ecda4d34`; extracted APK SHA-256 is `c12e5775519c230281c26d6b75ee0dde49041bf972d85aaa1dafda1787a9bbac`.
+- The artifact ZIP and APK passed integrity inspection. Unit report: 30 tests, 0 failures. Lint: 0 errors and 6 existing warnings.
+- The corrective candidate is ready for a second physical visual inspection. The premium design remains **CI-VERIFIED but NOT VERIFIED/ACCEPTED** until that inspection and user review pass.
+
+
+## 2026-08-09 — Premium overview v1 physical verification and user acceptance
+
+- The corrective candidate was installed and visually inspected on the OPPO A60 5G through six user-supplied screenshots covering the first viewport, quick metrics, diagnosis, battery details, RAM details and special accesses.
+- The previously observed truncation defects were resolved: the capture time rendered as `19:08:00`, the thermal and CPU tile copy remained readable, and both special-access badges were fully visible.
+- The first viewport, dark visual system, semantic status hero, metric grid, storage surface, diagnosis disclosure and technical-detail sections rendered coherently on the physical device.
+- Truthful unavailable states remained intact: numeric CPU activity was unavailable, battery voltage remained unavailable/rejected, and no health, capacity or optimization claim was introduced.
+- The user reviewed the result and accepted it as a good first version, choosing to defer further design refinement to a later phase so functional development can continue.
+- Premium overview design/UX v1 is now **PHYSICALLY VERIFIED and ACCEPTED AS A BASELINE**, not declared final. Future polish remains recorded design debt.
+- The design PR remains stacked on snapshot lifecycle PR #10. The next unfinished gate is PR #10 physical verification of repeated-tap protection and failure-state preservation; the design milestone must not be described as the final product design.

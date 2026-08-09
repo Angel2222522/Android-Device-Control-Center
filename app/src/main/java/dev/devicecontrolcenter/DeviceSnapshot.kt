@@ -77,6 +77,11 @@ object SnapshotPresentation {
             "Τελευταία ενημέρωση: $time"
         } ?: "Δεν υπάρχει έγκυρο στιγμιότυπο"
 
+    fun capturedTimeLabel(capturedAtMillis: Long?, zoneId: ZoneId = ZoneId.systemDefault()): String =
+        capturedAtMillis?.let {
+            Instant.ofEpochMilli(it).atZone(zoneId).format(timeFormatter)
+        } ?: "Μη διαθέσιμη"
+
     fun thermalLabel(status: Int): String = when (status) {
         PowerManager.THERMAL_STATUS_NONE -> "Χωρίς θερμικό περιορισμό"
         PowerManager.THERMAL_STATUS_LIGHT -> "Ελαφρύς θερμικός περιορισμός"

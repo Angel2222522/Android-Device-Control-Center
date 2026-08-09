@@ -52,4 +52,10 @@ class SnapshotLifecycleTest {
             SnapshotPresentation.capturedAtLabel(null, ZoneId.of("UTC")),
         )
     }
+
+    @Test
+    fun compactCaptureTimeIsSuitableForTheRefreshControl() {
+        assertEquals("00:00:00", SnapshotPresentation.capturedTimeLabel(0L, ZoneId.of("UTC")))
+        assertEquals("Μη διαθέσιμη", SnapshotPresentation.capturedTimeLabel(null, ZoneId.of("UTC")))
+    }
 }

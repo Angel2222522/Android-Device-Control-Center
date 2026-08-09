@@ -125,3 +125,10 @@
 - SAF/MediaStore-first versus broad All Files Access posture.
 - Local-VPN firewall in main roadmap versus later optional module.
 - Final brand name, logo and exact identity.
+
+
+## D-021 — Accept premium overview v1 as the first design baseline
+
+- **Decision:** Accept the current premium overview as a physically verified first baseline and continue functional development. Defer additional visual refinement to a later design phase.
+- **Why:** The physical target now shows a coherent, readable and substantially improved experience. Further polish should not block the next evidence-based capability milestone.
+- **Boundary:** This is not a claim that the visual language is final. Future refinement may revisit hierarchy, motion, iconography, density and deeper interaction quality without weakening truthful unavailable states.
