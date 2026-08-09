@@ -57,3 +57,15 @@
 - Corrected thermal wording rendered: **PASSED**, screenshot evidence retained.
 - Observed after update: RAM 3.53 GB total / 1.03 GB available / low-memory flag false; thermal status severe; thermal-envelope use 107%; storage 101.76 GB total / 28.46 GB available.
 - Stable development-signing solution: **PHYSICALLY VERIFIED ACROSS SUCCESSIVE BUILDS**.
+
+## 2026-08-09 — OEM RAM/storage comparison and truth labels
+
+- Target device: OPPO A60 5G, Android/ColorOS 16.0.5.
+- OEM settings evidence: 4.00 GB physical RAM + 4.00 GB storage-backed RAM expansion; UI reports 3.09 GB used and 4.91 GB available across the combined pool.
+- App evidence: 3.53 GiB kernel-accessible RAM; 1.03 GiB available; low-memory flag false.
+- OEM storage evidence: 96.9 GB / 128 GB shown as used/advertised total.
+- App evidence: 101.76 GiB app-data filesystem; 28.46 GiB available.
+- Official Android semantics for `advertisedMem`, `totalMem`, `availMem` and `StatFs`: **VERIFIED**.
+- PR #5; head `fd4a7dea3f9c84b0be80d9dc1972c5494c8027c0`; CI run `31314062520`: build/lint/tests/certificate/artifact **PASSED**.
+- Merge commit: `addd31b6b2ded85b56968f8456578a882014e003`.
+- Physical rendering of new split labels: **UNVERIFIED**.
