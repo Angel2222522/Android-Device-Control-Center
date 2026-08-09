@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Process
-import android.os.UserHandle
 import android.os.storage.StorageManager
 import java.time.Instant
 import java.time.ZoneId
@@ -86,7 +85,7 @@ object AppIntelligenceScanner {
                     storageManager?.queryStatsForPackage(
                         StorageManager.UUID_DEFAULT,
                         packageName,
-                        UserHandle.myUserHandle(),
+                        Process.myUserHandle(),
                     )?.let { stats ->
                         saturatingAdd(
                             saturatingAdd(stats.appBytes, stats.dataBytes),
