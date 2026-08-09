@@ -13,6 +13,17 @@ internal object StorageTrashIndex {
     private const val PAYLOAD_SUFFIX = ".payload"
     private const val TEMPORARY_SUFFIX = ".payload.tmp"
 
+    private val operationLock = Any()
+
+    /**
+     * Serializes the move's durable PREPARED window with trash recovery and index updates.
+     * This is intentionally process-local: after process death, no owner remains and the
+     * durable PREPARED record continues through normal fingerprint-based recovery.
+     */
+    internal fun <T> withOperationLock(block: () -> T): T = synchronized(operationLock) {
+        block()
+    }
+
     private const val ID_KEY = "id"
     private const val DISPLAY_NAME_KEY = "display_name"
     private const val PAYLOAD_NAME_KEY = "payload_name"
@@ -80,21 +91,25 @@ internal object StorageTrashIndex {
         records.filterNot { it.id == id }
     }
 
-    fun find(context: Context, id: String): StorageTrashItem? =
+    fun find(context: Context, id: String): StorageTrashItem? = withOperationLock {
         loadRecords(context).firstOrNull {
             it.id == id && it.state == StorageTrashRecordState.TRASHED
         }?.toItem(context)
+    }
 
-    fun loadLast(context: Context): StorageTrashItem? =
+    fun loadLast(context: Context): StorageTrashItem? = withOperationLock {
         loadRecords(context)
             .firstOrNull { it.state == StorageTrashRecordState.TRASHED }
             ?.toItem(context)
+    }
 
-    fun loadAll(context: Context): List<StorageTrashItem> = loadRecords(context)
-        .asSequence()
-        .filter { it.state == StorageTrashRecordState.TRASHED }
-        .mapNotNull { it.toItem(context) }
-        .toList()
+    fun loadAll(context: Context): List<StorageTrashItem> = withOperationLock {
+        loadRecords(context)
+            .asSequence()
+            .filter { it.state == StorageTrashRecordState.TRASHED }
+            .mapNotNull { it.toItem(context) }
+            .toList()
+    }
 
     private fun loadRecords(context: Context): List<StorageTrashRecord> {
         val parsed = read(context) ?: return emptyList()
@@ -211,10 +226,10 @@ internal object StorageTrashIndex {
     private fun update(
         context: Context,
         transform: (List<StorageTrashRecord>) -> List<StorageTrashRecord>,
-    ): Boolean {
+    ): Boolean = withOperationLock {
         val current = read(context)
-            ?: return false
-        return write(context, transform(current))
+            ?: return@withOperationLock false
+        write(context, transform(current))
     }
 
     private fun write(context: Context, records: List<StorageTrashRecord>): Boolean {
