@@ -10,7 +10,7 @@ class StorageIntelligenceTest {
         val result = sampleResult(wasTruncated = true)
 
         assertEquals(
-            "12 αρχεία · 4 φάκελοι · σταμάτησε στο όριο ασφαλείας",
+            "12 αρχεία · 4 φάκελοι · ελέγχθηκε μόνο μέρος στο όριο ασφαλείας",
             StorageIntelligencePresentation.summary(result),
         )
     }
@@ -28,6 +28,12 @@ class StorageIntelligenceTest {
     @Test
     fun fileSizesUseAUnitThatDoesNotRoundSmallFilesToZeroGiB() {
         assertEquals("2.0 KiB", StorageIntelligencePresentation.storageSize(2_048L))
+        assertEquals(
+            "0 B",
+            StorageIntelligencePresentation.fileSize(
+                StorageFileEntry("empty.bin", 0L, 0L),
+            ),
+        )
         assertEquals(
             "Μέγεθος μη διαθέσιμο",
             StorageIntelligencePresentation.fileSize(
@@ -58,6 +64,29 @@ class StorageIntelligenceTest {
         assertEquals(
             "01/01 01:00",
             StorageIntelligencePresentation.modifiedAt(3_600_000L, ZoneId.of("UTC")),
+        )
+    }
+
+    @Test
+    fun truncationDoesNotClaimThatTheWholeScopeWasChecked() {
+        val result = sampleResult(wasTruncated = true)
+
+        assertEquals(
+            "Η σάρωση σταμάτησε στο όριο των ${StorageScanner.MAX_ENTRIES} entries· ο αριθμός των μη ελεγμένων entries δεν είναι γνωστός.",
+            StorageIntelligencePresentation.limitation(result),
+        )
+    }
+
+    @Test
+    fun unreadableDirectoriesAreReportedAsAnIncompleteCheck() {
+        val result = sampleResult(wasTruncated = false).copy(
+            emptyDirectories = emptyList(),
+            unreadableDirectoryCount = 2,
+        )
+
+        assertEquals(
+            "Δεν επιβεβαιώθηκαν κενοί φάκελοι: 2 φάκελοι δεν ήταν αναγνώσιμοι.",
+            StorageIntelligencePresentation.emptyDirectorySummary(result),
         )
     }
 

@@ -117,6 +117,32 @@ class FoundationTest {
     }
 
     @Test
+    fun batterySnapshotRejectsInvalidTelemetryWithoutInventingValues() {
+        val snapshot = BatterySnapshotReader.fromRaw(
+            level = 50,
+            scale = 100,
+            status = 999,
+            plugged = 0,
+            temperatureTenthsCelsius = 2_000,
+            voltageMillivolts = 4_000,
+            readIntProperty = { property ->
+                when (property) {
+                    android.os.BatteryManager.BATTERY_PROPERTY_CURRENT_NOW -> -500_000
+                    android.os.BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER -> -1
+                    else -> Int.MIN_VALUE
+                }
+            },
+            readLongProperty = { -1L },
+        )
+
+        assertNull(snapshot.status)
+        assertNull(snapshot.temperatureCelsius)
+        assertEquals(-500_000, snapshot.currentNowMicroamps)
+        assertNull(snapshot.chargeCounterMicroampHours)
+        assertNull(snapshot.energyCounterNanowattHours)
+    }
+
+    @Test
     fun rejectsImplausibleBroadcastVoltageAndUsesStandardSysfsFallback() {
         val snapshot = BatterySnapshotReader.fromRaw(
             level = 66,

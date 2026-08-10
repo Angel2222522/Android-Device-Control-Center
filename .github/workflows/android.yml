@@ -9,6 +9,12 @@ on:
     paths-ignore:
       - "**/*.md"
   workflow_dispatch:
+    inputs:
+      deliver_final_apk:
+        description: "Primary-agent authorization to hand off one development-signed private-sideload APK after every gate passes"
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -41,8 +47,12 @@ jobs:
       - name: Restore stable debug keystore
         run: base64 --decode keystore/debug.keystore.base64 > keystore/debug.keystore
 
-      - name: Verify debug build
-        run: gradle --no-daemon lintDebug testDebugUnitTest assembleDebug
+      - name: Verify debug and minified release builds
+        run: |
+          gradle --no-daemon --stacktrace \
+            lintDebug testDebugUnitTest assembleDebug
+          gradle --no-daemon --stacktrace \
+            lintRelease testReleaseUnitTest assembleRelease
 
       - name: Verify stable debug certificate
         run: |
@@ -50,13 +60,132 @@ jobs:
           echo "$CERTS"
           echo "$CERTS" | grep -F "Signer #1 certificate SHA-256 digest: f805690fd2b6a9e925d6da491fbbb2839df7df581db580f58eb7f26742804c7a"
 
-      - name: Upload APK and reports
+      - name: Verify release is intentionally unsigned
+        run: |
+          RELEASE_APK=app/build/outputs/apk/release/app-release-unsigned.apk
+          test -f "$RELEASE_APK"
+          unzip -t "$RELEASE_APK" >/dev/null
+          "$ANDROID_HOME/build-tools/36.0.0/aapt2" dump badging "$RELEASE_APK" >/dev/null
+          if "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify "$RELEASE_APK"; then
+            echo "The internal minified release validation APK must not be signed in CI."
+            exit 1
+          fi
+          echo "The minified release validation APK is intentionally unsigned and is not a handoff artifact."
+
+      - name: Upload verification reports (no APK handoff)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: android-verification
+          name: android-verification-reports
           retention-days: 7
           path: |
-            app/build/outputs/apk/debug/*.apk
             app/build/reports/**
+            app/build/test-results/**
+            app/build/outputs/mapping/release/**
+            app/build/outputs/logs/**
           if-no-files-found: warn
+
+  migration-instrumentation:
+    # This job runs the real Room v1-to-current migration on Android 16 SQLite.
+    # It intentionally uploads no APK; generated debug APKs are test inputs only.
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android 16 SDK
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.13"
+
+      - name: Restore stable debug keystore
+        run: base64 --decode keystore/debug.keystore.base64 > keystore/debug.keystore
+
+      - name: Run Room migration instrumentation test on Android 16
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          emulator-options: -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect
+          disable-animations: true
+          script: >-
+            gradle --no-daemon connectedDebugAndroidTest
+            -Pandroid.testInstrumentationRunnerArguments.class=dev.devicecontrolcenter.SnapshotHistoryMigrationTest
+
+  final-apk-handoff:
+    # This job is intentionally unavailable to push/PR runs. It runs only after
+    # the primary agent explicitly authorizes a manual final handoff. It uses
+    # the repository-pinned development key, never a production signing key.
+    needs: [verify, migration-instrumentation]
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      inputs.deliver_final_apk
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android 16 SDK
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.13"
+
+      - name: Restore stable development keystore
+        run: base64 --decode keystore/debug.keystore.base64 > keystore/debug.keystore
+
+      - name: Build minified release for approved handoff
+        run: gradle --no-daemon assembleRelease
+
+      - name: Align and sign the approved private-sideload APK
+        run: |
+          UNSIGNED_APK=app/build/outputs/apk/release/app-release-unsigned.apk
+          ALIGNED_APK="$RUNNER_TEMP/app-release-aligned.apk"
+          FINAL_APK="$RUNNER_TEMP/app-private-sideload-development.apk"
+          test -f "$UNSIGNED_APK"
+          "$ANDROID_HOME/build-tools/36.0.0/zipalign" -p -f 4 "$UNSIGNED_APK" "$ALIGNED_APK"
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" sign \
+            --ks keystore/debug.keystore \
+            --ks-pass pass:android \
+            --ks-key-alias androiddebugkey \
+            --key-pass pass:android \
+            --out "$FINAL_APK" \
+            "$ALIGNED_APK"
+          CERTS=$("$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$FINAL_APK")
+          echo "$CERTS"
+          echo "$CERTS" | grep -F "Signer #1 certificate SHA-256 digest: f805690fd2b6a9e925d6da491fbbb2839df7df581db580f58eb7f26742804c7a"
+
+      - name: Upload exactly one development-signed private-sideload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: private-sideload-development-apk
+          retention-days: 7
+          path: ${{ runner.temp }}/app-private-sideload-development.apk
+          if-no-files-found: error
