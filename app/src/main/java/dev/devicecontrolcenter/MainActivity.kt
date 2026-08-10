@@ -826,6 +826,11 @@ private fun CapabilityRoute(
 
     LaunchedEffect(resumeEpoch) {
         loadDurableTrash()
+        // Settings changes (especially Usage Access) are only authoritative after
+        // returning from Android settings. Refresh the snapshot and app catalog so
+        // Privacy Center and App Center do not keep a stale capability state.
+        loadApps()
+        refresh()
     }
 
     val currentState = state.value
